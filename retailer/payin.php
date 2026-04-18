@@ -60,28 +60,30 @@ require_once '../includes/header.php';
             <form method="POST">
                 <div class="form-group">
                     <label class="form-label">Amount (INR)</label>
-                    <input type="number" name="amount" class="form-control" placeholder="Enter amount" min="10" required style="font-size: 18px; font-weight: 700; padding: 14px;">
-                    <div class="form-hint">* Minimum ₹10 allowed.</div>
+                    <input type="number" id="payinAmount" name="amount" class="form-control" placeholder="0.00" required step="1" 
+                           style="font-size: 24px; font-weight: 700; padding: 16px; text-align: center;">
+                    <p class="text-secondary" style="font-size: 13px; margin-top: 8px;">* Minimum ₹10 allowed.</p>
                 </div>
 
-                <!-- Quick Amount Buttons -->
-                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
-                    <?php foreach([500, 1000, 2000, 5000, 10000] as $amt): ?>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.querySelector('input[name=amount]').value=<?php echo $amt; ?>">
-                        ₹<?php echo number_format($amt); ?>
-                    </button>
-                    <?php endforeach; ?>
+                <div class="d-flex flex-wrap gap-10 mb-20" style="margin-bottom: 25px;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setAmount(500)">₹500</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setAmount(1000)">₹1,000</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setAmount(2000)">₹2,000</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setAmount(5000)">₹5,000</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setAmount(10000)">₹10,000</button>
                 </div>
-                
-                <div style="background: var(--bg-elevated); padding: 18px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 20px;">
-                    <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;">Payment Options</h4>
-                    <div class="payment-icons">
+
+                <div style="background: var(--bg-elevated); padding: 20px; border-radius: var(--radius); margin-bottom: 25px;">
+                    <h4 style="font-size: 14px; margin-bottom: 12px; font-weight: 600;">Payment Options</h4>
+                    <div style="display: flex; gap: 15px; font-size: 20px; color: var(--primary);">
                         <i class="fab fa-cc-visa"></i>
                         <i class="fab fa-cc-mastercard"></i>
-                        <i class="fas fa-mobile-screen-button"></i>
-                        <i class="fas fa-building-columns"></i>
+                        <i class="fas fa-mobile-alt"></i>
+                        <i class="fas fa-university"></i>
                     </div>
-                    <p class="form-hint">Credit Card, Debit Card, UPI, and Netbanking supported.</p>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">
+                        Credit Card, Debit Card, UPI, and Netbanking supported.
+                    </p>
                 </div>
 
                 <button type="submit" name="payin" class="btn btn-primary btn-block" style="padding: 14px;">
@@ -91,5 +93,11 @@ require_once '../includes/header.php';
         </div>
     </div>
 </div>
+
+<script>
+function setAmount(val) {
+    document.getElementById('payinAmount').value = val;
+}
+</script>
 
 <?php require_once '../includes/footer.php'; ?>
