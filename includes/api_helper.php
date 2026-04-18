@@ -113,7 +113,7 @@ function createPayinOrder($amount, $callback, $redirect, $customer) {
 // Create Payout
 function createPayout($amount, $account, $ifsc, $bank_name, $name, $callback, $reference) {
     $payoutData = [
-        "amount" => $amount,
+        "amount" => (int)$amount,
         "mode" => "IMPS",
         "call_back_url" => $callback,
         "gateway_id" => PAYOUT_GATEWAY_ID,
