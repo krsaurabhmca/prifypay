@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     $refId = "PAYOUT_" . time() . "_" . $uId;
-    $callback = BASE_URL . "/callbacks/payout.php";
+    $callback = PAYOUT_CALLBACK_URL;
     
     $res = createPayout($amount, $bene['account_number'], $bene['ifsc'], $bene['bank_name'], $bene['name'], $callback, $refId);
 

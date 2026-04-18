@@ -9,8 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payin'])) {
         alert('danger', 'Minimum amount is ₹10.');
     } else {
         $refId = "PAYIN_" . time() . "_" . $_SESSION['user_id'];
-        $callback = BASE_URL . "/callbacks/payin.php";
-        $redirect = BASE_URL . "/retailer/index.php";
+        $callback = PAYIN_CALLBACK_URL;
+        $redirect = PAYIN_REDIRECT_URL;
         
         // Use $userData (from DB) which is always available via header.php
         $customer = [

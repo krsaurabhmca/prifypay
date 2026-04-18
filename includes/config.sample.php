@@ -9,6 +9,11 @@
 // ── Base URL (no trailing slash) ──
 define('BASE_URL', 'https://yourdomain.com');
 
+// ── Callback & Redirect URLs ──
+define('PAYIN_CALLBACK_URL',  BASE_URL . '/callbacks/payin.php');
+define('PAYIN_REDIRECT_URL',  BASE_URL . '/retailer/index.php');
+define('PAYOUT_CALLBACK_URL', BASE_URL . '/callbacks/payout.php');
+
 // ── Database Credentials ──
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');

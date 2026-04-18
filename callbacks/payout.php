@@ -10,7 +10,8 @@ file_put_contents('payout_callback_log.txt', date('[Y-m-d H:i:s] ') . $rawBody .
 
 if (isset($data['reference_id'])) {
     $refId = mysqli_real_escape_string($conn, $data['reference_id']);
-    $status = ($data['status'] == 'processed' || $data['status'] == 'success') ? 'success' : 'failed';
+    $statusInput = strtolower($data['status'] ?? '');
+    $status = ($statusInput == 'processed' || $statusInput == 'success') ? 'success' : 'failed';
     $utr = mysqli_real_escape_string($conn, $data['utr'] ?? '');
 
     // Update transaction status
