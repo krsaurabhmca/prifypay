@@ -21,16 +21,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payin'])) {
         $response = createPayinOrder($amount, $callback, $redirect, $customer);
 
         if ($response['success']) {
-            $payUrl = $response['data']['payment_url'];
+            // payment_url can be at different levels depending on API version
+            $payUrl = $response['data']['payment_url'] 
+                   ?? $response['data']['data']['payment_url'] 
+                   ?? null;
             
-            // Log as pending
-            logTransaction($conn, $uId, 'payin', $amount, 0, 0, 0, 0, 'pending', $refId, '', $payUrl, $response['raw']);
-            
-            // Redirect to payment
-            echo "<script>window.location.href='$payUrl';</script>";
-            exit();
+            if ($payUrl) {
+                // Log as pending
+                logTransaction($conn, $uId, 'payin', $amount, 0, 0, 0, 0, 'pending', $refId, '', $payUrl, $response['raw']);
+                
+                // Redirect to payment gateway
+                echo "<script>window.location.href='$payUrl';</script>";
+                exit();
+            } else {
+                alert('danger', 'Payment URL not received from gateway. Please try again.');
+            }
         } else {
-            alert('danger', 'API Error: ' . ($response['data']['message'] ?? 'Unknown error'));
+            $errMsg = $response['data']['message'] ?? $response['data']['error'] ?? $response['error'] ?? 'Unknown API error';
+            alert('danger', 'Payment Error: ' . $errMsg);
         }
     }
 }

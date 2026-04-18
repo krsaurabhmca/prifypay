@@ -55,8 +55,15 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
 
     $decodedData = json_decode($response, true);
 
+    // SLPE API uses both 'success' and 'result' fields depending on endpoint
+    $isSuccess = ($httpCode >= 200 && $httpCode < 300);
+    if ($isSuccess) {
+        $isSuccess = (isset($decodedData['success']) && $decodedData['success'] == true)
+                  || (isset($decodedData['result']) && $decodedData['result'] == true);
+    }
+
     return [
-        "success" => ($httpCode >= 200 && $httpCode < 300 && isset($decodedData['success']) && $decodedData['success'] == true),
+        "success" => $isSuccess,
         "http_code" => $httpCode,
         "data" => $decodedData,
         "raw" => $response
