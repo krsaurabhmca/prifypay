@@ -30,6 +30,8 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_CUSTOMREQUEST => strtoupper($method),
         CURLOPT_HTTPHEADER => $headers,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false,
     ];
 
     // Handle POST/PUT
@@ -49,22 +51,17 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
     if ($error) {
         return [
             "success" => false,
-            "error" => $error
+            "error" => $error,
+            "http_code" => $httpCode,
+            "raw" => $response
         ];
     }
 
     $decodedData = json_decode($response, true);
 
-    // SLPE API uses both 'success' and 'result' fields depending on endpoint
-    $isSuccess = ($httpCode >= 200 && $httpCode < 300);
-    if ($isSuccess) {
-        $isSuccess = (isset($decodedData['success']) && $decodedData['success'] == true)
-                  || (isset($decodedData['result']) && $decodedData['result'] == true)
-                  || (isset($decodedData['status']) && ($decodedData['status'] == true || $decodedData['status'] == 1));
-    }
-
+    // Simplify success check to match support scripts (HTTP 200 = Success)
     return [
-        "success" => $isSuccess,
+        "success" => ($httpCode >= 200 && $httpCode < 300),
         "http_code" => $httpCode,
         "data" => $decodedData,
         "raw" => $response
@@ -74,15 +71,19 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
 // Balance Check Helper
 function getApiBalance() {
     $res = callAPI("GET", "balance-check");
+    
+    // Optional: Log raw response for debugging on live server
+    // file_put_contents(__DIR__ . '/../support/balance_debug_log.txt', date('[Y-m-d H:i:s] ') . $res['raw'] . PHP_EOL, FILE_APPEND);
+
     if($res['success']) {
-        // Handle both nested and root-level structures
-        $data = $res['data'];
-        $innerData = $data['data'] ?? [];
+        $apiData = $res['data'];
+        // The API might return balance directly in root or inside a data key
+        $inner = $apiData['data'] ?? $apiData;
         
         if (API_MODE === 'live') {
-            return $innerData['wallet_balance'] ?? $data['wallet_balance'] ?? 0;
+            return (float)($inner['wallet_balance'] ?? $apiData['wallet_balance'] ?? 0);
         } else {
-            return $innerData['test_wallet_balance'] ?? $data['test_wallet_balance'] ?? 0;
+            return (float)($inner['test_wallet_balance'] ?? $apiData['test_wallet_balance'] ?? 0);
         }
     }
     return 0;
