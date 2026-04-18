@@ -29,19 +29,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_bene'])) {
         $respJson = mysqli_real_escape_string($conn, $res['raw'] ?? '');
 
         if ($res['success']) {
-            // Match the specific API structure provided by the user:
-            // $res['data']['data']['beneValidationResp']['resourceData']
             $apiData = $res['data']['data'] ?? null;
-            $resData = $apiData['beneValidationResp']['resourceData'] ?? null;
-            $responseCode = $resData['responseCode'] ?? '';
+            $beneResp = $apiData['beneValidationResp'] ?? null;
+            $metaData = $beneResp['metaData'] ?? null;
+            $resData = $beneResp['resourceData'] ?? null;
             
-            if ($responseCode === 'A' || (isset($res['data']['success']) && $res['data']['success'] == 1)) {
+            $metaStatus = strtoupper($metaData['status'] ?? '');
+            $responseCode = $resData['responseCode'] ?? '';
+
+            if ($responseCode === 'A' && $metaStatus === 'SUCCESS') {
                 $status = 'verified';
                 $verifiedName = trim($resData['creditorName'] ?? $name);
                 alert('success', 'Beneficiary verified! Bank name: ' . $verifiedName);
             } else {
                 $status = 'failed';
-                $failMsg = $res['data']['message'] ?? ($apiData['beneValidationResp']['metaData']['message'] ?? 'Verification unsuccessful');
+                $failMsg = $metaData['message'] ?? 'Verification unsuccessful';
                 alert('danger', 'Verification issue: ' . $failMsg);
             }
         } else {
