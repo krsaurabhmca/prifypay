@@ -2,19 +2,21 @@
 
 function callAPI($method, $endpoint, $data = [], $customHeaders = [])
 {
-    // Default SLPE Headers from config
+    $baseUrl = "https://api.slpe.in/api/v2/";
+
+    // Default SLPE Headers - Hardcoded for 100% certainty
     $defaultHeaders = [
-        "api-mode: " . API_MODE,
-        "api-secret: " . API_SECRET,
-        "api-key: " . API_KEY,
-        "access-token: " . ACCESS_TOKEN,
+        "api-mode: live",
+        "api-secret: secret_oNkXroVDS0WY8aVt7E4YU3ynkX4CPHH5",
+        "api-key: key_bSO8j6bs3IA0W6gJYuPiNiCks1XVJler",
+        "access-token: access_token_M1mkYsmvSpG9uXSABzbIQ27BomyuL/uQClKFComaWlhwa6S0Y1jZYE8llQXwWzHr4qGUw6RaHTP82sHfPStvYA==",
         "Content-Type: application/json"
     ];
 
     // Merge headers
     $headers = array_merge($defaultHeaders, $customHeaders);
 
-    $url = API_BASE_URL . $endpoint;
+    $url = $baseUrl . $endpoint;
 
     $curl = curl_init();
 
@@ -47,23 +49,14 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
 
     curl_close($curl);
 
-    // Error handling
     if ($error) {
-        return [
-            "success" => false,
-            "error" => $error,
-            "http_code" => $httpCode,
-            "raw" => $response
-        ];
+        return ["success" => false, "error" => $error, "http_code" => $httpCode, "raw" => $response];
     }
 
-    $decodedData = json_decode($response, true);
-
-    // Simplify success check to match support scripts (HTTP 200 = Success)
     return [
         "success" => ($httpCode >= 200 && $httpCode < 300),
         "http_code" => $httpCode,
-        "data" => $decodedData,
+        "data" => json_decode($response, true),
         "raw" => $response
     ];
 }
