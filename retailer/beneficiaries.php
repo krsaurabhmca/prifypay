@@ -21,15 +21,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_bene'])) {
     } else {
         $res = validateAccount($account, $ifsc, $name, $phone);
 
-    $status = 'unverified';
-    $respJson = $res['raw'];
+        $status = 'unverified';
+        $respJson = mysqli_real_escape_string($conn, $res['raw'] ?? '');
 
         if ($res['success']) {
-            $status = 'verified';
-            alert('success', 'Beneficiary verified and added successfully!');
+            // Check deeper response for verification result
+            $resData = $res['data']['data']['beneValidationResp']['resourceData'] ?? null;
+            $responseCode = $resData['responseCode'] ?? '';
+            
+            if ($responseCode === 'A' || $res['data']['success'] == true) {
+                $status = 'verified';
+                $verifiedName = trim($resData['creditorName'] ?? $name);
+                alert('success', 'Beneficiary verified! Bank name: ' . $verifiedName);
+            } else {
+                $status = 'failed';
+                $failMsg = $res['data']['message'] ?? $res['data']['data']['beneValidationResp']['metaData']['message'] ?? 'Verification unsuccessful';
+                alert('danger', 'Verification issue: ' . $failMsg);
+            }
         } else {
             $status = 'failed';
-            alert('danger', 'Verification failed: ' . ($res['data']['message'] ?? 'API Error'));
+            $errMsg = $res['data']['message'] ?? $res['error'] ?? 'API Error - Account could not be verified';
+            alert('danger', 'Verification failed: ' . $errMsg);
         }
 
         $sql = "INSERT INTO beneficiaries (user_id, name, account_number, ifsc, bank_name, pan_no, aadhaar_no, phone, status, verification_response) 
