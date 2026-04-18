@@ -3,7 +3,7 @@ require_once '../includes/header.php';
 checkRole('retailer');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payin'])) {
-    $amount = (float)$_POST['amount'];
+    $amount = (int)$_POST['amount'];
     
     if ($amount < 10) {
         alert('danger', 'Minimum amount is ₹10.');
@@ -12,9 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payin'])) {
         $callback = BASE_URL . "/callbacks/payin.php";
         $redirect = BASE_URL . "/retailer/index.php";
         
+        // Use $userData (from DB) which is always available via header.php
         $customer = [
-            "name" => $_SESSION['name'],
-            "email" => $_SESSION['email'],
+            "name" => $userData['name'],
+            "email" => $userData['email'] ?: 'user@prifypay.in',
             "phone" => $userData['phone']
         ];
 
@@ -34,11 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payin'])) {
                 echo "<script>window.location.href='$payUrl';</script>";
                 exit();
             } else {
-                alert('danger', 'Payment URL not received from gateway. Please try again.');
+                alert('danger', 'Payment URL not received. Raw: ' . substr($response['raw'] ?? '', 0, 200));
             }
         } else {
-            $errMsg = $response['data']['message'] ?? $response['data']['error'] ?? $response['error'] ?? 'Unknown API error';
-            alert('danger', 'Payment Error: ' . $errMsg);
+            $errMsg = $response['data']['message'] ?? $response['data']['error'] ?? $response['error'] ?? '';
+            $rawHint = $response['raw'] ? ' | API: ' . substr($response['raw'], 0, 150) : '';
+            alert('danger', 'Payment Error: ' . ($errMsg ?: 'Gateway error') . $rawHint);
         }
     }
 }

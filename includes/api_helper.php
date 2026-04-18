@@ -93,11 +93,11 @@ function validateAccount($account, $ifsc, $name, $phone) {
 // Create Payin Order
 function createPayinOrder($amount, $callback, $redirect, $customer) {
     $data = [
-        "amount" => $amount,
+        "amount" => (int)$amount,
         "call_back_url" => $callback,
         "redirection_url" => $redirect,
         "gateway_id" => PAYIN_GATEWAY_ID,
-        "payment_link_expiry" => date("Y-m-d H:i:s", strtotime("+1 hour")),
+        "payment_link_expiry" => date("Y-m-d H:i:s", strtotime("+24 hour")),
         "payment_for" => "Add Money to Wallet",
         "customer" => $customer,
         "mode" => [
