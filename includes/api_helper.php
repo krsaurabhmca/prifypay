@@ -59,7 +59,8 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
     $isSuccess = ($httpCode >= 200 && $httpCode < 300);
     if ($isSuccess) {
         $isSuccess = (isset($decodedData['success']) && $decodedData['success'] == true)
-                  || (isset($decodedData['result']) && $decodedData['result'] == true);
+                  || (isset($decodedData['result']) && $decodedData['result'] == true)
+                  || (isset($decodedData['status']) && ($decodedData['status'] == true || $decodedData['status'] == 1));
     }
 
     return [
