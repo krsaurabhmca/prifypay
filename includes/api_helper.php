@@ -74,10 +74,12 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
 function getApiBalance() {
     $res = callAPI("GET", "balance-check");
     if($res['success']) {
-        // Handle both direct and nested 'balance' field
-        return $res['data']['balance'] 
-               ?? $res['data']['data']['balance'] 
-               ?? 0;
+        $apiData = $res['data']['data'] ?? null;
+        if (API_MODE === 'live') {
+            return $apiData['wallet_balance'] ?? 0;
+        } else {
+            return $apiData['test_wallet_balance'] ?? 0;
+        }
     }
     return 0;
 }
