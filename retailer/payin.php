@@ -1,6 +1,14 @@
 <?php
-require_once '../includes/header.php';
+require_once '../includes/db.php';
+require_once '../includes/functions.php';
+require_once '../includes/api_helper.php';
+
 checkRole('retailer');
+$uId = $_SESSION['user_id'];
+
+// Get user data for current request
+$userRes = mysqli_query($conn, "SELECT * FROM users WHERE id = $uId");
+$userData = mysqli_fetch_assoc($userRes);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payin'])) {
     $amount = (int)$_POST['amount'];
@@ -8,11 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payin'])) {
     if ($amount < 10) {
         alert('danger', 'Minimum amount is ₹10.');
     } else {
-        $refId = "PAYIN_" . time() . "_" . $_SESSION['user_id'];
+        $refId = "PAYIN_" . time() . "_" . $uId;
         $callback = PAYIN_CALLBACK_URL;
         $redirect = PAYIN_REDIRECT_URL;
         
-        // Use $userData (from DB) which is always available via header.php
         $customer = [
             "name" => $userData['name'],
             "email" => $userData['email'] ?: 'user@prifypay.in',
@@ -22,16 +29,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payin'])) {
         $response = createPayinOrder($amount, $callback, $redirect, $customer);
 
         if ($response['success']) {
-            // payment_url can be at different levels depending on API version
             $payUrl = $response['data']['payment_url'] 
                    ?? $response['data']['data']['payment_url'] 
                    ?? null;
             
             if ($payUrl) {
-                // Log as pending
                 logTransaction($conn, $uId, 'payin', $amount, 0, 0, 0, 0, 'pending', $refId, '', $payUrl, $response['raw']);
-                
-                // Redirect to payment gateway
                 echo "<script>window.location.href='$payUrl';</script>";
                 exit();
             } else {
@@ -44,6 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payin'])) {
         }
     }
 }
+
+require_once '../includes/header.php';
 ?>
 
 <div class="max-w-600 mx-auto">
