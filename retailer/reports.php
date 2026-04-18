@@ -56,9 +56,15 @@ $transactions = mysqli_query($conn, "SELECT t.*, u.name as user_name FROM transa
                     </td>
                     <td><small class="text-muted"><?php echo $tx['utr'] ? $tx['utr'] : $tx['reference_id']; ?></small></td>
                     <td>
-                        <span class="badge badge-<?php echo $tx['status']; ?>">
+                        <span class="badge badge-<?php echo $tx['status']; ?>" id="status-badge-<?php echo $tx['id']; ?>">
                             <?php echo strtoupper($tx['status']); ?>
                         </span>
+                        <?php if($tx['status'] == 'pending'): ?>
+                            <button class="btn btn-outline-primary btn-xs" style="padding: 2px 6px; font-size: 10px; margin-left: 5px;" 
+                                    onclick="checkStatus(<?php echo $tx['id']; ?>, this)">
+                                <i class="fas fa-sync-alt"></i> Check
+                            </button>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endwhile; ?>
@@ -74,5 +80,48 @@ $transactions = mysqli_query($conn, "SELECT t.*, u.name as user_name FROM transa
         </table>
     </div>
 </div>
+
+<script>
+function checkStatus(txId, btn) {
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    const formData = new FormData();
+    formData.append('tx_id', txId);
+    
+    fetch('ajax_check_status.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success) {
+            const badge = document.getElementById('status-badge-' + txId);
+            badge.className = 'badge badge-' + data.status;
+            badge.innerText = data.status.toUpperCase();
+            if(data.status !== 'pending') {
+                btn.style.display = 'none';
+                // Reload wallet display if we have it in header
+                location.reload(); 
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                alert(data.message);
+            }
+        } else {
+            alert(data.message);
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        alert('Check failed. Try again later.');
+    });
+}
+</script>
 
 <?php require_once '../includes/footer.php'; ?>

@@ -33,12 +33,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payin'])) {
 
         if ($response['success']) {
             $apiData = $response['data'];
+            // Capture API Order ID for matching in callback
+            $apiOrderId = $apiData['order_id'] ?? $apiData['data']['order_id'] ?? '';
+            
             $payUrl = $apiData['payment_url'] 
                    ?? $apiData['data']['payment_url'] 
                    ?? null;
             
             if ($payUrl) {
-                logTransaction($conn, $uId, 'payin', $amount, 0, 0, 0, 0, 'pending', $refId, '', $payUrl, $response['raw']);
+                // Store apiOrderId in UTR field for reliable callback matching
+                logTransaction($conn, $uId, 'payin', $amount, 0, 0, 0, 0, 'pending', $refId, $apiOrderId, $payUrl, $response['raw']);
                 echo "<script>window.location.href='$payUrl';</script>";
                 exit();
             } else {

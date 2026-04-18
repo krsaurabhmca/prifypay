@@ -75,11 +75,14 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
 function getApiBalance() {
     $res = callAPI("GET", "balance-check");
     if($res['success']) {
-        $apiData = $res['data']['data'] ?? null;
+        // Handle both nested and root-level structures
+        $data = $res['data'];
+        $innerData = $data['data'] ?? [];
+        
         if (API_MODE === 'live') {
-            return $apiData['wallet_balance'] ?? 0;
+            return $innerData['wallet_balance'] ?? $data['wallet_balance'] ?? 0;
         } else {
-            return $apiData['test_wallet_balance'] ?? 0;
+            return $innerData['test_wallet_balance'] ?? $data['test_wallet_balance'] ?? 0;
         }
     }
     return 0;
@@ -116,6 +119,11 @@ function createPayinOrder($amount, $callback, $redirect, $customer) {
     return callAPI("POST", "create-order", $data);
 }
 
+// Check Payin Status
+function getPayinStatus($orderId) {
+    return callAPI("GET", "order-status", ["order_id" => $orderId]);
+}
+
 // Create Payout
 function createPayout($amount, $account, $ifsc, $bank_name, $name, $callback, $reference) {
     $payoutData = [
@@ -132,5 +140,10 @@ function createPayout($amount, $account, $ifsc, $bank_name, $name, $callback, $r
         ]
     ];
     return callAPI('POST', 'create-payout', $payoutData);
+}
+
+// Check Payout Status
+function getPayoutStatus($referenceId) {
+    return callAPI("GET", "payout-status", ["reference_id" => $referenceId]);
 }
 ?>

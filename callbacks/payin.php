@@ -15,12 +15,14 @@ if (!$data) {
 // Log the callback for debugging
 file_put_contents(__DIR__ . '/../support/callback_log.txt', date('[Y-m-d H:i:s] ') . $rawBody . PHP_EOL, FILE_APPEND);
 
-// Extract fields
-$orderId = $data['order_id'] ?? '';
-$status = strtolower($data['status'] ?? '');
-$amount = (float)($data['amount'] ?? 0);
-$txnId = $data['transaction_id'] ?? $data['txn_id'] ?? '';
-$refId = $data['reference_id'] ?? '';
+// Extract fields - SLPE V2 API uses a nested structure
+$orderId = $data['data']['order_id'] ?? $data['order_id'] ?? '';
+$orderData = $data['data']['order_data'] ?? $data; // Use nested order_data if available, else fallback to root
+
+$status = strtolower($orderData['status'] ?? $data['status'] ?? '');
+$amount = (float)($orderData['amount'] ?? $data['amount'] ?? 0);
+$txnId = $orderData['transaction_id'] ?? $data['transaction_id'] ?? $orderData['txn_id'] ?? $data['txn_id'] ?? '';
+$refId = $orderData['merchant_ref_id'] ?? $data['reference_id'] ?? $data['data']['merchant_ref_id'] ?? '';
 
 if (!empty($orderId) && ($status == 'success' || $status == 'completed' || $status == 'captured')) {
     $orderIdEsc = mysqli_real_escape_string($conn, $orderId);

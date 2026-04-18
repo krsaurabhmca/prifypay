@@ -61,14 +61,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($userData['parent_id']) {
             updateWallet($conn, $userData['parent_id'], $distributorPart, 'add');
             // Log distributor commission
-            logTransaction($conn, $userData['parent_id'], 'commission', $distributorPart, 0, 0, 0, $distributorPart, 'success', 'COMM_'.$refId);
+            logTransaction($conn, $userData['parent_id'], 'commission', $distributorPart, 0, 0, 0, 0, 'success', 'COMM_'.$refId);
         }
 
-        // 3. Log Retailer Payout
-        $utr = $res['data']['utr'] ?? $res['data']['transaction_id'] ?? '';
-        logTransaction($conn, $uId, 'payout', $amount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, 'success', $refId, $utr, '', $res['raw']);
+        // 3. Extract status and UTR
+        $apiStatus = strtolower($res['data']['status'] ?? '');
+        $utr = $res['data']['utr'] ?? $res['data']['transaction_id'] ?? $res['data']['payout_id'] ?? '';
         
-        echo json_encode(['success' => true, 'message' => 'Payout completed successfully!', 'utr' => $utr]);
+        // If API says processed, mark as success; else mark as pending (await callback)
+        $txStatus = ($apiStatus == 'processed' || $apiStatus == 'success') ? 'success' : 'pending';
+
+        logTransaction($conn, $uId, 'payout', $amount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, $txStatus, $refId, $utr, '', $res['raw']);
+        
+        echo json_encode(['success' => true, 'message' => 'Payout ' . $txStatus . '!', 'utr' => $utr, 'status' => $txStatus]);
     } else {
         $errMsg = $res['data']['message'] ?? $res['error'] ?? 'API Error - Please try again later.';
         echo json_encode(['success' => false, 'message' => 'Payout Failed: ' . $errMsg]);
