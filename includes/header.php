@@ -131,12 +131,23 @@ $firstName = explode(' ', $userData['name'])[0];
                         <i class="fas fa-sun"></i>
                     </button>
 
-                    <div class="wallet-badge">
+                    <div class="wallet-badge" title="Internal Wallet Balance">
                         <div>
-                            <div class="wallet-label">Wallet</div>
+                            <div class="wallet-label">Local Wallet</div>
                             <div class="wallet-amount"><?php echo formatCurrency($userData['wallet_balance']); ?></div>
                         </div>
                     </div>
+
+                    <?php if (in_array($role, ['admin', 'retailer'])): 
+                        $apiBal = getApiBalance();
+                    ?>
+                    <div class="wallet-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.2);" title="Gateway Available Limit">
+                        <div>
+                            <div class="wallet-label" style="color: #059669;">Gateway</div>
+                            <div class="wallet-amount" style="color: #059669;"><?php echo formatCurrency($apiBal); ?></div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
 
                     <div class="profile-dropdown-wrapper" id="profileDropdown">
                         <div class="profile-trigger" onclick="document.getElementById('profileDropdown').classList.toggle('open')">

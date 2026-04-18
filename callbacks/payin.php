@@ -22,38 +22,38 @@ $amount = (float)($data['amount'] ?? 0);
 $txnId = $data['transaction_id'] ?? $data['txn_id'] ?? '';
 $refId = $data['reference_id'] ?? '';
 
-if (!empty($orderId) && $status == 'success') {
-    $orderId = mysqli_real_escape_string($conn, $orderId);
-    $txnId = mysqli_real_escape_string($conn, $txnId);
-    $refId = mysqli_real_escape_string($conn, $refId);
+if (!empty($orderId) && ($status == 'success' || $status == 'completed' || $status == 'captured')) {
+    $orderIdEsc = mysqli_real_escape_string($conn, $orderId);
+    $txnIdEsc = mysqli_real_escape_string($conn, $txnId);
+    $refIdEsc = mysqli_real_escape_string($conn, $refId);
     
-    // Check if already processed (avoid double credit)
-    $checkQ = mysqli_query($conn, "SELECT * FROM transactions WHERE utr = '$orderId' AND status = 'success'");
+    // Check if already processed
+    $checkQ = mysqli_query($conn, "SELECT * FROM transactions WHERE (utr = '$orderIdEsc' OR utr = '$txnIdEsc') AND status = 'success'");
     if (mysqli_num_rows($checkQ) == 0) {
-        
-        // Find the pending transaction - try reference_id first, then match by order_id in payment_url
         $tx = null;
         
+        // 1. Try matching by reference_id
         if (!empty($refId)) {
-            $txQuery = mysqli_query($conn, "SELECT * FROM transactions WHERE reference_id = '$refId' AND status = 'pending'");
+            $txQuery = mysqli_query($conn, "SELECT * FROM transactions WHERE reference_id = '$refIdEsc' AND status = 'pending'");
             $tx = mysqli_fetch_assoc($txQuery);
         }
         
-        // Fallback: try matching by order_id in the payment_url or api_response
-        if (!$tx && !empty($orderId)) {
-            $txQuery = mysqli_query($conn, "SELECT * FROM transactions WHERE (payment_url LIKE '%$orderId%' OR api_response LIKE '%$orderId%') AND status = 'pending' AND type = 'payin' ORDER BY id DESC LIMIT 1");
+        // 2. Try matching by order_id or txn_id in logs
+        if (!$tx && (!empty($orderId) || !empty($txnId))) {
+            $search = !empty($orderId) ? $orderIdEsc : $txnIdEsc;
+            $txQuery = mysqli_query($conn, "SELECT * FROM transactions WHERE (payment_url LIKE '%$search%' OR api_response LIKE '%$search%' OR reference_id LIKE '%$search%') AND status = 'pending' AND type = 'payin' ORDER BY id DESC LIMIT 1");
             $tx = mysqli_fetch_assoc($txQuery);
         }
         
-        // Fallback: match by amount for recent pending payin (last 2 hours)
+        // 3. Last resort: match by amount and user (if we can find user in any field) for recent 2h
         if (!$tx && $amount > 0) {
-            $txQuery = mysqli_query($conn, "SELECT * FROM transactions WHERE type = 'payin' AND status = 'pending' AND amount = $amount AND created_at >= NOW() - INTERVAL 2 HOUR ORDER BY id DESC LIMIT 1");
+            $txQuery = mysqli_query($conn, "SELECT * FROM transactions WHERE type = 'payin' AND status = 'pending' AND amount = " . (float)$amount . " AND created_at >= NOW() - INTERVAL 2 HOUR ORDER BY id DESC LIMIT 1");
             $tx = mysqli_fetch_assoc($txQuery);
         }
         
         if ($tx) {
             $uId = $tx['user_id'];
-            $creditAmount = $tx['amount']; // Use the logged amount
+            $creditAmount = $tx['amount'];
             
             // 1. Credit wallet
             updateWallet($conn, $uId, $creditAmount, 'add');
