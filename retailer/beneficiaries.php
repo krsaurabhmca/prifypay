@@ -69,7 +69,8 @@ if (isset($_GET['delete_id'])) {
 }
 
 require_once '../includes/header.php';
-<?php
+
+
 $beneficiaries = mysqli_query($conn, "SELECT * FROM beneficiaries WHERE user_id = $uId ORDER BY id DESC");
 $bene_count = mysqli_num_rows($beneficiaries);
 ?>
