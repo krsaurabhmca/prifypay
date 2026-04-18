@@ -1,0 +1,80 @@
+<?php
+require_once '../includes/header.php';
+checkRole('retailer');
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payin'])) {
+    $amount = (float)$_POST['amount'];
+    
+    if ($amount < 10) {
+        alert('danger', 'Minimum amount is ₹10.');
+    } else {
+        $refId = "PAYIN_" . time() . "_" . $_SESSION['user_id'];
+        $callback = BASE_URL . "/callbacks/payin.php";
+        $redirect = BASE_URL . "/retailer/index.php";
+        
+        $customer = [
+            "name" => $_SESSION['name'],
+            "email" => $_SESSION['email'],
+            "phone" => $userData['phone']
+        ];
+
+        $response = createPayinOrder($amount, $callback, $redirect, $customer);
+
+        if ($response['success']) {
+            $payUrl = $response['data']['payment_url'];
+            
+            // Log as pending
+            logTransaction($conn, $uId, 'payin', $amount, 0, 0, 0, 0, 'pending', $refId, '', $payUrl, $response['raw']);
+            
+            // Redirect to payment
+            echo "<script>window.location.href='$payUrl';</script>";
+            exit();
+        } else {
+            alert('danger', 'API Error: ' . ($response['data']['message'] ?? 'Unknown error'));
+        }
+    }
+}
+?>
+
+<div class="max-w-600 mx-auto">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-plus-circle"></i> Add Money to Wallet</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="form-group">
+                    <label class="form-label">Amount (INR)</label>
+                    <input type="number" name="amount" class="form-control" placeholder="Enter amount" min="10" required style="font-size: 18px; font-weight: 700; padding: 14px;">
+                    <div class="form-hint">* Minimum ₹10 allowed.</div>
+                </div>
+
+                <!-- Quick Amount Buttons -->
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <?php foreach([500, 1000, 2000, 5000, 10000] as $amt): ?>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.querySelector('input[name=amount]').value=<?php echo $amt; ?>">
+                        ₹<?php echo number_format($amt); ?>
+                    </button>
+                    <?php endforeach; ?>
+                </div>
+                
+                <div style="background: var(--bg-elevated); padding: 18px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 20px;">
+                    <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;">Payment Options</h4>
+                    <div class="payment-icons">
+                        <i class="fab fa-cc-visa"></i>
+                        <i class="fab fa-cc-mastercard"></i>
+                        <i class="fas fa-mobile-screen-button"></i>
+                        <i class="fas fa-building-columns"></i>
+                    </div>
+                    <p class="form-hint">Credit Card, Debit Card, UPI, and Netbanking supported.</p>
+                </div>
+
+                <button type="submit" name="payin" class="btn btn-primary btn-block" style="padding: 14px;">
+                    <i class="fas fa-lock"></i> Proceed to Pay Securely
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<?php require_once '../includes/footer.php'; ?>

@@ -1,0 +1,19 @@
+# Environment & Secrets
+includes/config.php
+
+# Logs
+support/callback_log.txt
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Composer (if used later)
+/vendor/
+composer.lock
