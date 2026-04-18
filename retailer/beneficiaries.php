@@ -1,6 +1,10 @@
 <?php
-require_once '../includes/header.php';
+require_once '../includes/db.php';
+require_once '../includes/functions.php';
+require_once '../includes/api_helper.php';
+
 checkRole('retailer');
+$uId = $_SESSION['user_id'];
 
 // Add Beneficiary logic
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_bene'])) {
@@ -25,28 +29,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_bene'])) {
         $respJson = mysqli_real_escape_string($conn, $res['raw'] ?? '');
 
         if ($res['success']) {
-            // Check deeper response for verification result
-            $resData = $res['data']['data']['beneValidationResp']['resourceData'] ?? null;
+            // Match the specific API structure provided by the user:
+            // $res['data']['data']['beneValidationResp']['resourceData']
+            $apiData = $res['data']['data'] ?? null;
+            $resData = $apiData['beneValidationResp']['resourceData'] ?? null;
             $responseCode = $resData['responseCode'] ?? '';
             
-            if ($responseCode === 'A' || $res['data']['success'] == true) {
+            if ($responseCode === 'A' || (isset($res['data']['success']) && $res['data']['success'] == 1)) {
                 $status = 'verified';
                 $verifiedName = trim($resData['creditorName'] ?? $name);
                 alert('success', 'Beneficiary verified! Bank name: ' . $verifiedName);
             } else {
                 $status = 'failed';
-                $failMsg = $res['data']['message'] ?? $res['data']['data']['beneValidationResp']['metaData']['message'] ?? 'Verification unsuccessful';
+                $failMsg = $res['data']['message'] ?? ($apiData['beneValidationResp']['metaData']['message'] ?? 'Verification unsuccessful');
                 alert('danger', 'Verification issue: ' . $failMsg);
             }
         } else {
             $status = 'failed';
-            $errMsg = $res['data']['message'] ?? $res['error'] ?? 'API Error - Account could not be verified';
+            $errMsg = $res['data']['message'] ?? ($res['error'] ?? 'API Error - Account could not be verified');
             alert('danger', 'Verification failed: ' . $errMsg);
         }
 
         $sql = "INSERT INTO beneficiaries (user_id, name, account_number, ifsc, bank_name, pan_no, aadhaar_no, phone, status, verification_response) 
                 VALUES ($uId, '$name', '$account', '$ifsc', '$bank', '$pan_no', '$aadhaar_no', '$phone', '$status', '$respJson')";
-        mysqli_query($conn, $sql);
+        if (mysqli_query($conn, $sql)) {
+            redirect('beneficiaries.php');
+        }
     }
 }
 
@@ -60,6 +68,8 @@ if (isset($_GET['delete_id'])) {
     }
 }
 
+require_once '../includes/header.php';
+<?php
 $beneficiaries = mysqli_query($conn, "SELECT * FROM beneficiaries WHERE user_id = $uId ORDER BY id DESC");
 $bene_count = mysqli_num_rows($beneficiaries);
 ?>
