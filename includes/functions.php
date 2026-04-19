@@ -47,7 +47,7 @@ function updateWallet($conn, $userId, $amount, $type = 'add') {
     return mysqli_query($conn, $query);
 }
 
-function logTransaction($conn, $userId, $type, $amount, $fee, $commDist, $commAdmin, $commRetailer, $status, $refId, $utr = '', $url = '', $response = '') {
+function logTransaction($conn, $userId, $type, $amount, $fee, $commDist, $commAdmin, $commRetailer, $status, $refId, $utr = '', $url = '', $response = '', $payoutBeneId = null, $payoutAmount = null) {
     $userId = (int)$userId;
     $amount = (float)$amount;
     $fee = (float)$fee;
@@ -58,11 +58,13 @@ function logTransaction($conn, $userId, $type, $amount, $fee, $commDist, $commAd
     $utr = mysqli_real_escape_string($conn, $utr);
     $url = mysqli_real_escape_string($conn, $url);
     $response = mysqli_real_escape_string($conn, $response);
+    $payoutBeneId = $payoutBeneId ? (int)$payoutBeneId : "NULL";
+    $payoutAmount = $payoutAmount ? (float)$payoutAmount : "NULL";
 
     $sql = "INSERT INTO transactions 
-    (user_id, type, amount, fee, commission_distributor, commission_admin, commission_retailer, status, reference_id, utr, payment_url, api_response) 
+    (user_id, type, amount, fee, commission_distributor, commission_admin, commission_retailer, status, reference_id, utr, payment_url, api_response, payout_bene_id, payout_amount) 
     VALUES 
-    ($userId, '$type', $amount, $fee, $commDist, $commAdmin, $commRetailer, '$status', '$refId', '$utr', '$url', '$response')";
+    ($userId, '$type', $amount, $fee, $commDist, $commAdmin, $commRetailer, '$status', '$refId', '$utr', '$url', '$response', $payoutBeneId, $payoutAmount)";
     
     return mysqli_query($conn, $sql);
 }

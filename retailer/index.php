@@ -47,6 +47,9 @@ $recent_tx = mysqli_query($conn, "SELECT * FROM transactions WHERE user_id = $uI
     <a href="payin.php" class="btn btn-primary" style="padding: 14px; border-radius: var(--radius);">
         <i class="fas fa-plus-circle"></i> Add Money
     </a>
+    <a href="fast_transfer.php" class="btn btn-primary" style="padding: 14px; border-radius: var(--radius); background: linear-gradient(135deg, #f6c23e, #f4b619); border: none; color: #000;">
+        <i class="fas fa-bolt"></i> Fast Transfer
+    </a>
     <a href="payout.php" class="btn btn-secondary" style="padding: 14px; border-radius: var(--radius);">
         <i class="fas fa-paper-plane"></i> Send Payout
     </a>

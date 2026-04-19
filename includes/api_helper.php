@@ -2,14 +2,14 @@
 
 function callAPI($method, $endpoint, $data = [], $customHeaders = [])
 {
-    $baseUrl = "https://api.slpe.in/api/v2/";
+    $baseUrl = API_BASE_URL;
 
-    // Default SLPE Headers - Hardcoded for 100% certainty
+    // Default SLPE Headers - Dynamic from config
     $defaultHeaders = [
-        "api-mode: live",
-        "api-secret: secret_oNkXroVDS0WY8aVt7E4YU3ynkX4CPHH5",
-        "api-key: key_bSO8j6bs3IA0W6gJYuPiNiCks1XVJler",
-        "access-token: access_token_M1mkYsmvSpG9uXSABzbIQ27BomyuL/uQClKFComaWlhwa6S0Y1jZYE8llQXwWzHr4qGUw6RaHTP82sHfPStvYA==",
+        "api-mode: " . API_MODE,
+        "api-secret: " . API_SECRET,
+        "api-key: " . API_KEY,
+        "access-token: " . ACCESS_TOKEN,
         "Content-Type: application/json"
     ];
 

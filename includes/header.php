@@ -71,6 +71,10 @@ $firstName = explode(' ', $userData['name'])[0];
                         <i class="fas fa-plus-circle"></i>
                         <span>Pay IN (Add Money)</span>
                     </a>
+                    <a href="fast_transfer.php" class="nav-link <?php echo $currentPage == 'fast_transfer.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-bolt" style="color: #f6c23e;"></i>
+                        <span>Fast Transfer (New)</span>
+                    </a>
                     <a href="beneficiaries.php" class="nav-link <?php echo $currentPage == 'beneficiaries.php' ? 'active' : ''; ?>">
                         <i class="fas fa-address-book"></i>
                         <span>Beneficiaries</span>

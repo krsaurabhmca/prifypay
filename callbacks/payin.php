@@ -1,6 +1,7 @@
 <?php
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
+require_once '../includes/api_helper.php';
 
 // Read callback data - support both JSON body and form/GET params
 $rawBody = file_get_contents('php://input');
@@ -64,7 +65,47 @@ if (!empty($orderId) && ($status == 'success' || $status == 'completed' || $stat
             $utrValue = !empty($txnId) ? $txnId : $orderId;
             mysqli_query($conn, "UPDATE transactions SET status = 'success', utr = '$utrValue' WHERE id = " . $tx['id']);
             
-            // 3. Handle Payin Commissions (if configured)
+            // 3. Handle Auto-Payout (Fast Transfer)
+            if (!empty($tx['payout_bene_id']) && !empty($tx['payout_amount'])) {
+                $beneId = $tx['payout_bene_id'];
+                $payoutAmount = (float)$tx['payout_amount'];
+                
+                $beneQ = mysqli_query($conn, "SELECT * FROM beneficiaries WHERE id = $beneId");
+                $bene = mysqli_fetch_assoc($beneQ);
+                
+                if ($bene) {
+                    $uRes = mysqli_query($conn, "SELECT * FROM users WHERE id = $uId");
+                    $uData = mysqli_fetch_assoc($uRes);
+                    
+                    $payoutComm = getCommissionValue($conn, 'retailer', 'payout');
+                    $distComm = getCommissionValue($conn, 'distributor', 'payout');
+                    
+                    $retailerFee = calculateCommission($payoutAmount, $payoutComm);
+                    $distributorPart = calculateCommission($payoutAmount, $distComm);
+                    $totalDeduction = $payoutAmount + $retailerFee;
+                    
+                    if ($uData['wallet_balance'] >= $totalDeduction) {
+                        $payoutRef = "AUTO_" . time() . "_" . $uId;
+                        $pRes = createPayout($payoutAmount, $bene['account_number'], $bene['ifsc'], $bene['bank_name'], $bene['name'], PAYOUT_CALLBACK_URL, $payoutRef);
+                        
+                        if ($pRes['success']) {
+                            updateWallet($conn, $uId, $totalDeduction, 'sub');
+                            if ($uData['parent_id']) {
+                                updateWallet($conn, $uData['parent_id'], $distributorPart, 'add');
+                                logTransaction($conn, $uData['parent_id'], 'commission', $distributorPart, 0, 0, 0, 0, 'success', 'COMM_'.$payoutRef);
+                            }
+                            
+                            $apiStatus = strtolower($pRes['data']['status'] ?? '');
+                            $payoutUtr = $pRes['data']['utr'] ?? $pRes['data']['transaction_id'] ?? '';
+                            $pStatus = ($apiStatus == 'processed' || $apiStatus == 'success') ? 'success' : 'pending';
+                            
+                            logTransaction($conn, $uId, 'payout', $payoutAmount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, $pStatus, $payoutRef, $payoutUtr, '', $pRes['raw']);
+                        }
+                    }
+                }
+            }
+
+            // 4. Handle Payin Commissions (if configured)
             $retComm = getCommissionValue($conn, 'retailer', 'payin');
             $distComm = getCommissionValue($conn, 'distributor', 'payin');
             
@@ -76,7 +117,6 @@ if (!empty($orderId) && ($status == 'success' || $status == 'completed' || $stat
                 logTransaction($conn, $uId, 'commission', $retailerEarn, 0, 0, 0, $retailerEarn, 'success', 'COMM_RET_'.$utrValue);
             }
             
-            // Parent Distributor commission
             $userRes = mysqli_query($conn, "SELECT parent_id FROM users WHERE id = $uId");
             $uRow = mysqli_fetch_assoc($userRes);
             if ($uRow['parent_id'] && $distributorEarn > 0) {
@@ -86,7 +126,6 @@ if (!empty($orderId) && ($status == 'success' || $status == 'completed' || $stat
         }
     }
 } elseif (!empty($orderId) && in_array($status, ['failed', 'failure'])) {
-    // Mark transaction as failed
     $orderId = mysqli_real_escape_string($conn, $orderId);
     $refId = mysqli_real_escape_string($conn, $refId);
     
