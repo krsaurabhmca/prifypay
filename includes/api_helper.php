@@ -36,9 +36,9 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
         CURLOPT_SSL_VERIFYHOST => false,
     ];
 
-    // Handle POST/PUT
+    $postData = json_encode($data);
     if (in_array($method, ["POST", "PUT", "PATCH"])) {
-        $options[CURLOPT_POSTFIELDS] = json_encode($data);
+        $options[CURLOPT_POSTFIELDS] = $postData;
     }
 
     curl_setopt_array($curl, $options);
@@ -48,6 +48,11 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
     $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
     curl_close($curl);
+
+    file_put_contents(__DIR__ . '/../support/api_debug_log.txt', 
+        date('[Y-m-d H:i:s] ') . "URL: $url | Data: $postData | Response: $response | Error: $error" . PHP_EOL, 
+        FILE_APPEND
+    );
 
     if ($error) {
         return ["success" => false, "error" => $error, "http_code" => $httpCode, "raw" => $response];
@@ -105,7 +110,7 @@ function createPayinOrder($amount, $callback, $redirect, $customer) {
         "customer" => $customer,
         "mode" => [
             "netbanking" => false,
-            "card" => true,
+            "card" => false,
             "upi" => true,
             "wallet" => false
         ]
