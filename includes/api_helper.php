@@ -104,7 +104,7 @@ function createPayinOrder($amount, $callback, $redirect, $customer) {
         "payment_for" => "Add Money to Wallet",
         "customer" => $customer,
         "mode" => [
-            "netbanking" => true,
+            "netbanking" => false,
             "card" => true,
             "upi" => true,
             "wallet" => false
