@@ -1,6 +1,6 @@
 <?php
 require_once '../includes/header.php';
-checkRole('admin');
+checkRole(['admin', 'dev']);
 
 $where = "1=1";
 

@@ -30,9 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
             $_SESSION['name'] = $user['name'];
             $_SESSION['role'] = $user['role'];
             $_SESSION['email'] = $user['email'];
-            
+
             // Handle Login OTP
-            if ($login_otp == '1' && $user['role'] != 'admin') {
+            if ($login_otp == '1' && !in_array($user['role'], ['admin', 'dev'])) {
                 // Reset verification status for this session
                 mysqli_query($conn, "UPDATE users SET mobile_verified = 0, email_verified = 0 WHERE id = " . $user['id']);
                 redirect("verify.php");
@@ -49,12 +49,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - PrifyPay</title>
     <link rel="stylesheet" href="assets/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script>document.documentElement.setAttribute('data-theme', localStorage.getItem('prifypay_theme') || 'light');</script>
     <style>
@@ -62,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
             --auth-bg: #f8fafc;
             --auth-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
         }
+
         [data-theme="dark"] {
             --auth-bg: #0f172a;
         }
@@ -79,8 +82,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
             overflow-x: hidden;
         }
 
-        .auth-decoration-1 { position: absolute; top: -100px; right: -100px; width: 400px; height: 400px; border-radius: 50%; background: var(--auth-gradient); opacity: 0.05; filter: blur(60px); z-index: 0; }
-        .auth-decoration-2 { position: absolute; bottom: -100px; left: -100px; width: 300px; height: 300px; border-radius: 50%; background: #06b6d4; opacity: 0.05; filter: blur(50px); z-index: 0; }
+        .auth-decoration-1 {
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: var(--auth-gradient);
+            opacity: 0.05;
+            filter: blur(60px);
+            z-index: 0;
+        }
+
+        .auth-decoration-2 {
+            position: absolute;
+            bottom: -100px;
+            left: -100px;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: #06b6d4;
+            opacity: 0.05;
+            filter: blur(50px);
+            z-index: 0;
+        }
 
         .auth-card {
             width: 100%;
@@ -95,17 +121,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
             backdrop-filter: blur(10px);
         }
 
-        .auth-header { text-align: center; margin-bottom: 40px; }
-        .auth-logo { margin-bottom: 24px; }
-        .auth-logo img { width: 140px; height: auto; transition: transform 0.3s ease; }
-        .auth-logo:hover img { transform: scale(1.05); }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
 
-        .auth-header h1 { font-size: 28px; font-weight: 800; color: var(--text-primary); margin: 0; letter-spacing: -0.5px; }
-        .auth-header p { font-size: 15px; color: var(--text-muted); margin: 8px 0 0; }
+        .auth-logo {
+            margin-bottom: 24px;
+        }
 
-        .form-group { margin-bottom: 24px; }
-        .form-label { font-weight: 600; font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; display: block; }
-        
+        .auth-logo img {
+            width: 140px;
+            height: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .auth-logo:hover img {
+            transform: scale(1.05);
+        }
+
+        .auth-header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .auth-header p {
+            font-size: 15px;
+            color: var(--text-muted);
+            margin: 8px 0 0;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: block;
+        }
+
         .input-group {
             position: relative;
             background: var(--bg-elevated);
@@ -113,8 +173,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
             border-radius: 16px;
             transition: all 0.2s ease;
         }
-        .input-group:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
-        .input-group i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 16px; }
+
+        .input-group:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
         .input-group .form-control {
             background: transparent;
             border: none;
@@ -124,7 +197,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
             height: auto;
             color: var(--text-primary);
         }
-        .input-group .form-control:focus { outline: none; box-shadow: none; }
+
+        .input-group .form-control:focus {
+            outline: none;
+            box-shadow: none;
+        }
 
         .captcha-box {
             display: flex;
@@ -135,9 +212,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
             border-radius: 16px;
             border: 1.5px solid var(--border);
         }
-        .captcha-img { height: 44px; border-radius: 10px; border: 1px solid var(--border); }
-        .captcha-input { flex: 1; border: none; background: transparent; padding: 10px; font-weight: 700; text-align: center; font-size: 16px; color: var(--text-primary); }
-        .captcha-input:focus { outline: none; }
+
+        .captcha-img {
+            height: 44px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .captcha-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 10px;
+            font-weight: 700;
+            text-align: center;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+
+        .captcha-input:focus {
+            outline: none;
+        }
 
         .btn-login {
             background: var(--auth-gradient);
@@ -157,8 +252,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
             box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
             margin-top: 10px;
         }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4); opacity: 0.95; }
-        .btn-login:active { transform: translateY(0); }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4);
+            opacity: 0.95;
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
 
         .auth-links {
             margin-top: 40px;
@@ -169,26 +272,63 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
             border-top: 1px solid var(--border);
             padding-top: 24px;
         }
-        .auth-links a { font-size: 12px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; font-weight: 500; }
-        .auth-links a:hover { color: var(--primary); }
-        
-        .auth-copyright { text-align: center; margin-top: 24px; font-size: 12px; color: var(--text-muted); }
-        
-        .password-toggle { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0; }
-        
-        .animate-in { animation: authFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        .auth-links a {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+            font-weight: 500;
+        }
+
+        .auth-links a:hover {
+            color: var(--primary);
+        }
+
+        .auth-copyright {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .animate-in {
+            animation: authFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
         @keyframes authFadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
+
 <body class="auth-container">
     <div class="auth-decoration-1"></div>
     <div class="auth-decoration-2"></div>
 
     <div style="position: fixed; top: 30px; right: 30px; z-index: 10;">
-        <button class="theme-toggle" id="themeToggle" style="width: 48px; height: 48px; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+        <button class="theme-toggle" id="themeToggle"
+            style="width: 48px; height: 48px; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
             <i class="fas fa-moon"></i>
             <i class="fas fa-sun"></i>
         </button>
@@ -196,13 +336,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
 
     <div class="auth-card animate-in">
         <div class="auth-header">
-            <div class="auth-logo">
-                <img src="assets/images/logo.png" alt="PrifyPay Logo">
-            </div>
-            <h1>Welcome Back</h1>
+            <img src="assets/images/logo.png" alt="PrifyPay Logo" style='height:70px'>
+
+            <p
+                style="font-size: 13px; color: var(--success); font-weight: 700; margin-top: 5px; letter-spacing: 1px; text-transform: uppercase;">
+                Safe | Secure | Seamless</p>
             <p>Access your secure dashboard</p>
         </div>
-        
+
         <?php displayAlert(); ?>
 
         <form method="POST" id="loginForm">
@@ -210,15 +351,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
                 <label class="form-label">Phone Number</label>
                 <div class="input-group">
                     <i class="fas fa-phone-alt"></i>
-                    <input type="text" name="phone" class="form-control" placeholder="10-digit number" pattern="[0-9]{10}" required>
+                    <input type="text" name="phone" class="form-control" placeholder="10-digit number"
+                        pattern="[0-9]{10}" required>
                 </div>
             </div>
-            
+
             <div class="form-group">
                 <label class="form-label">Password</label>
                 <div class="input-group">
                     <i class="fas fa-shield-alt"></i>
-                    <input type="password" name="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+                    <input type="password" name="password" id="loginPassword" class="form-control"
+                        placeholder="••••••••" required>
                     <button type="button" class="password-toggle" onclick="togglePassword('loginPassword', this)">
                         <i class="fas fa-eye"></i>
                     </button>
@@ -226,16 +369,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
             </div>
 
             <?php if ($login_captcha == '1'): ?>
-            <div class="form-group">
-                <label class="form-label">Security Check</label>
-                <div class="captcha-box">
-                    <img src="captcha.php" alt="captcha" class="captcha-img" id="captchaImg">
-                    <input type="text" name="captcha" class="captcha-input" placeholder="Enter Code" required maxlength="4">
-                    <button type="button" onclick="document.getElementById('captchaImg').src='captcha.php?'+Math.random()" class="btn btn-sm btn-light" style="width: 36px; height: 36px; border-radius: 10px; padding: 0;">
-                        <i class="fas fa-sync-alt" style="font-size: 12px;"></i>
-                    </button>
+                <div class="form-group">
+                    <label class="form-label">Security Check</label>
+                    <div class="captcha-box">
+                        <img src="captcha.php" alt="captcha" class="captcha-img" id="captchaImg">
+                        <input type="text" name="captcha" class="captcha-input" placeholder="Enter Code" required
+                            maxlength="4">
+                        <button type="button"
+                            onclick="document.getElementById('captchaImg').src='captcha.php?'+Math.random()"
+                            class="btn btn-sm btn-light"
+                            style="width: 36px; height: 36px; border-radius: 10px; padding: 0;">
+                            <i class="fas fa-sync-alt" style="font-size: 12px;"></i>
+                        </button>
+                    </div>
                 </div>
-            </div>
             <?php endif; ?>
 
             <button type="submit" name="login" class="btn-login">
@@ -270,7 +417,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
             }
         }
 
-        document.getElementById('themeToggle').addEventListener('click', function() {
+        document.getElementById('themeToggle').addEventListener('click', function () {
             const html = document.documentElement;
             const current = html.getAttribute('data-theme') || 'light';
             const next = current === 'dark' ? 'light' : 'dark';
@@ -279,4 +426,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
         });
     </script>
 </body>
+
 </html>

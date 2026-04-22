@@ -1,6 +1,6 @@
 <?php
 require_once '../includes/header.php';
-checkRole('admin');
+checkRole(['admin', 'dev']);
 
 $tId = (int)$_GET['id'];
 $adminId = $_SESSION['user_id'];

@@ -8,7 +8,13 @@ function isLoggedIn() {
 }
 
 function checkRole($role) {
-    if (!isLoggedIn() || $_SESSION['role'] !== $role) {
+    if (!isLoggedIn()) {
+        header("Location: ../login.php");
+        exit();
+    }
+    
+    $roles = is_array($role) ? $role : [$role];
+    if (!in_array($_SESSION['role'], $roles)) {
         header("Location: ../login.php");
         exit();
     }

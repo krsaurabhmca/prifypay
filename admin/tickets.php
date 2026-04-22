@@ -1,6 +1,6 @@
 <?php
 require_once '../includes/header.php';
-checkRole('admin');
+checkRole(['admin', 'dev']);
 
 $status = $_GET['status'] ?? 'open';
 $tickets = mysqli_query($conn, "SELECT st.*, u.name, u.role as user_role FROM support_tickets st JOIN users u ON st.user_id = u.id WHERE st.status = '$status' ORDER BY st.updated_at DESC");

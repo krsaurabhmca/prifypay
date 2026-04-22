@@ -1,6 +1,6 @@
 <?php
 require_once '../includes/header.php';
-checkRole('admin');
+checkRole(['admin', 'dev']);
 
 // Add User Logic
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_user'])) {
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_user'])) {
     }
 }
 
-$users = mysqli_query($conn, "SELECT u.*, p.name as parent_name FROM users u LEFT JOIN users p ON u.parent_id = p.id WHERE u.role != 'admin' ORDER BY u.id DESC");
+$users = mysqli_query($conn, "SELECT u.*, p.name as parent_name FROM users u LEFT JOIN users p ON u.parent_id = p.id WHERE u.role NOT IN ('admin', 'dev') ORDER BY u.id DESC");
 $distributors = mysqli_query($conn, "SELECT id, name FROM users WHERE role = 'distributor' ORDER BY name ASC");
 $user_count = mysqli_num_rows($users);
 ?>

@@ -1,6 +1,6 @@
 <?php
 require_once '../includes/header.php';
-checkRole('admin');
+checkRole(['admin', 'dev']);
 
 // Handle Approval/Rejection
 if (isset($_POST['action_kyc'])) {

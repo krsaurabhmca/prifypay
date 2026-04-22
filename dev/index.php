@@ -1,9 +1,9 @@
 <?php
 require_once '../includes/header.php';
-checkRole(['admin', 'dev']);
+checkRole('dev');
 
-// Global Stats
-$total_users = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as count FROM users WHERE role != 'admin'"));
+// Global Stats (Same as Admin but Dev can see more if needed)
+$total_users = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as count FROM users"));
 $total_distributors = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as count FROM users WHERE role = 'distributor'"));
 $total_retailers = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as count FROM users WHERE role = 'retailer'"));
 
@@ -18,6 +18,14 @@ $pending_kyc = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as count 
 
 $recent_tx = mysqli_query($conn, "SELECT t.*, u.name as user_name FROM transactions t JOIN users u ON t.user_id = u.id ORDER BY t.id DESC LIMIT 10");
 ?>
+
+<div class="alert alert-primary mb-25" style="border-radius: 16px; border: none; background: var(--auth-gradient); color: white; display: flex; align-items: center; gap: 15px;">
+    <i class="fas fa-terminal" style="font-size: 24px; opacity: 0.8;"></i>
+    <div>
+        <h4 class="mb-0 fw-800">Developer Master Console</h4>
+        <p class="mb-0 small opacity-80">You have full system-wide administrative and configuration privileges.</p>
+    </div>
+</div>
 
 <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
     <div class="stat-card animate-in">
@@ -58,65 +66,45 @@ $recent_tx = mysqli_query($conn, "SELECT t.*, u.name as user_name FROM transacti
     <div class="stat-card animate-in">
         <div class="stat-icon warning"><i class="fas fa-id-card"></i></div>
         <div class="stat-info">
-            <span class="stat-label">KYC API Balance</span>
+            <span class="stat-label">KYC Balance</span>
             <span class="stat-value text-warning"><?php echo formatCurrency($kyc_balance); ?></span>
-        </div>
-    </div>
-    <div class="stat-card animate-in">
-        <div class="stat-icon success"><i class="fas fa-bolt"></i></div>
-        <div class="stat-info">
-            <span class="stat-label">Today's Volume</span>
-            <span class="stat-value text-success"><?php echo formatCurrency($today_vol['total'] ?? 0); ?></span>
-        </div>
-    </div>
-    <div class="stat-card animate-in">
-        <div class="stat-icon danger"><i class="fas fa-id-card"></i></div>
-        <div class="stat-info">
-            <span class="stat-label">Pending KYC</span>
-            <span class="stat-value text-danger"><?php echo $pending_kyc['count']; ?></span>
         </div>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header">
-        <h2 class="card-title"><i class="fas fa-clock-rotate-left"></i> Global Recent Transactions</h2>
-        <a href="reports.php" class="btn btn-primary btn-sm">
-            <i class="fas fa-chart-bar"></i> View All Reports
-        </a>
-    </div>
-    <div class="table-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>User</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Ref ID</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while ($tx = mysqli_fetch_assoc($recent_tx)): ?>
-                <tr>
-                    <td><?php echo date('d M, H:i', strtotime($tx['created_at'])); ?></td>
-                    <td><strong style="color: var(--text-primary);"><?php echo $tx['user_name']; ?></strong></td>
-                    <td><span class="capitalize"><?php echo $tx['type']; ?></span></td>
-                    <td class="fw-700" style="color: var(--text-primary);"><?php echo formatCurrency($tx['amount']); ?></td>
-                    <td><small style="color: var(--text-muted);"><?php echo $tx['reference_id']; ?></small></td>
-                    <td>
-                        <span class="badge badge-<?php echo $tx['status']; ?>">
-                            <?php echo strtoupper($tx['status']); ?>
-                        </span>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-                <?php if (mysqli_num_rows($recent_tx) == 0): ?>
-                <tr><td colspan="6" class="empty-state"><i class="fas fa-inbox"></i><p>No transactions found.</p></td></tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+<div class="row mt-25">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-history"></i> System-Wide Activity</h2>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>TXID</th>
+                            <th>Amount</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($tx = mysqli_fetch_assoc($recent_tx)): ?>
+                        <tr>
+                            <td><strong><?php echo $tx['user_name']; ?></strong></td>
+                            <td><small><?php echo $tx['txid'] ?: $tx['reference_id']; ?></small></td>
+                            <td><strong><?php echo formatCurrency($tx['amount']); ?></strong></td>
+                            <td><span class="badge badge-light"><?php echo strtoupper($tx['type']); ?></span></td>
+                            <td><span class="badge badge-<?php echo $tx['status'] == 'success' ? 'success' : ($tx['status'] == 'pending' ? 'warning' : 'danger'); ?>"><?php echo strtoupper($tx['status']); ?></span></td>
+                            <td><?php echo date('d M, H:i', strtotime($tx['created_at'])); ?></td>
+                        </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 

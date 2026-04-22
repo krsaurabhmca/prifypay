@@ -1,5 +1,6 @@
 <?php
 require_once '../includes/header.php';
+checkRole(['admin', 'dev']);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['change_password'])) {
     $current = $_POST['current_password'];

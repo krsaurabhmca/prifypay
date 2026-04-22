@@ -1,5 +1,6 @@
 <?php
 require_once '../includes/header.php';
+checkRole(['admin', 'dev']);
 
 // Handle profile update
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_profile'])) {

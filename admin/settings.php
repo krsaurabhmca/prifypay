@@ -1,6 +1,6 @@
 <?php
 require_once '../includes/header.php';
-checkRole('admin');
+checkRole('dev');
 
 if (isset($_POST['update_settings'])) {
     foreach ($_POST['settings'] as $key => $value) {

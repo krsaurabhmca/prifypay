@@ -2,10 +2,8 @@
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
 
-// Only Admin can use this
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    die("Unauthorized access.");
-}
+require_once '../includes/header.php';
+checkRole(['admin', 'dev']);
 
 if (isset($_GET['id'])) {
     $targetId = (int)$_GET['id'];
@@ -19,6 +17,7 @@ if (isset($_GET['id'])) {
         if (!isset($_SESSION['admin_user_id'])) {
             $_SESSION['admin_user_id'] = $_SESSION['user_id'];
             $_SESSION['admin_name'] = $_SESSION['name'];
+            $_SESSION['admin_role'] = $_SESSION['role'];
         }
 
         // Switch session to target user
