@@ -2,7 +2,6 @@
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
 
-require_once '../includes/header.php';
 checkRole(['admin', 'dev']);
 
 if (isset($_GET['id'])) {
