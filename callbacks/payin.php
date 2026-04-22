@@ -23,9 +23,11 @@ $orderData = $data['data']['order_data'] ?? $data; // Use nested order_data if a
 $status = strtolower($orderData['status'] ?? $data['status'] ?? '');
 $amount = (float)($orderData['amount'] ?? $data['amount'] ?? 0);
 $txnId = $orderData['transaction_id'] ?? $data['transaction_id'] ?? $orderData['txn_id'] ?? $data['txn_id'] ?? '';
-$refId = $orderData['merchant_ref_id'] ?? $data['reference_id'] ?? $data['data']['merchant_ref_id'] ?? '';
+$refId = $orderData['merchant_ref_id'] ?? $data['merchant_ref_id'] ?? $data['reference_id'] ?? $data['data']['merchant_ref_id'] ?? '';
 
-if (!empty($orderId) && ($status == 'success' || $status == 'completed' || $status == 'captured')) {
+$successStatuses = ['success', 'completed', 'captured', 'paid'];
+
+if (!empty($orderId) && in_array($status, $successStatuses)) {
     $orderIdEsc = mysqli_real_escape_string($conn, $orderId);
     $txnIdEsc = mysqli_real_escape_string($conn, $txnId);
     $refIdEsc = mysqli_real_escape_string($conn, $refId);
@@ -63,7 +65,8 @@ if (!empty($orderId) && ($status == 'success' || $status == 'completed' || $stat
             
             // 2. Update transaction status
             $utrValue = !empty($txnId) ? $txnId : $orderId;
-            mysqli_query($conn, "UPDATE transactions SET status = 'success', utr = '$utrValue' WHERE id = " . $tx['id']);
+            $rawBodyEsc = mysqli_real_escape_string($conn, $rawBody);
+            mysqli_query($conn, "UPDATE transactions SET status = 'success', utr = '$utrValue', api_response = '$rawBodyEsc' WHERE id = " . $tx['id']);
             
             // 3. Handle Auto-Payout (Fast Transfer)
             if (!empty($tx['payout_bene_id']) && !empty($tx['payout_amount'])) {
