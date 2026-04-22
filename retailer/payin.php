@@ -18,8 +18,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payin'])) {
     }
     $amount = (isset($_POST['amount'])) ? (int)$_POST['amount'] : 0;
     
-    if ($amount < 10) {
-        alert('danger', 'Minimum amount is ₹10.');
+    if ($amount < 100) {
+        alert('danger', 'Minimum amount is ₹100.');
+    } elseif ($amount > 50000) {
+        alert('danger', 'Maximum amount allowed is ₹50,000 per transaction.');
     } else {
         $refId = "PAYIN_" . time() . "_" . $uId;
         
@@ -72,9 +74,9 @@ require_once __DIR__ . '/../includes/header.php';
             <form method="POST">
                 <div class="form-group text-center">
                     <label class="form-label" style="display: block; margin-bottom: 15px;">Enter Amount (INR)</label>
-                    <input type="number" id="payinAmount" name="amount" class="form-control" placeholder="0" required step="1" min="10"
+                    <input type="number" id="payinAmount" name="amount" class="form-control" placeholder="0" required step="1" min="100" max="50000"
                            style="font-size: 32px; font-weight: 800; padding: 20px; text-align: center; border-radius: 12px; border: 2px solid var(--border);">
-                    <p class="text-secondary" style="font-size: 13px; margin-top: 10px;">Minimum ₹10 allowed for Pay-In.</p>
+                    <p class="text-secondary" style="font-size: 13px; margin-top: 10px;">Range: ₹100 - ₹50,000 per transaction.</p>
                 </div>
 
                 <div class="d-flex flex-wrap justify-content-center gap-10 mb-20" style="margin-bottom: 30px; gap: 8px;">
