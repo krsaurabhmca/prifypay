@@ -41,28 +41,40 @@ $gatewayList = getGatewayList();
                     <div id="tab-gateway" class="tab-content active">
                         <h4 class="section-title">Gateway Routing</h4>
                         
+                        <?php 
+                        $mode = $s['api_mode'] ?? 'live';
+                        $payinKey = ($mode == 'live') ? 'live_payin' : 'test_payin';
+                        $payoutKey = ($mode == 'live') ? 'live_payout' : 'test_payout';
+                        ?>
+
                         <div class="form-group mb-20">
-                            <label class="form-label">Default Pay-In Gateway</label>
+                            <label class="form-label">Default Pay-In Gateway (<?php echo strtoupper($mode); ?> Mode)</label>
                             <select name="settings[payin_gateway_id]" class="form-control h-50">
                                 <option value="">Select Gateway</option>
                                 <?php foreach($gatewayList as $gw): ?>
+                                    <?php if ($gw[$payinKey]): ?>
                                     <option value="<?php echo $gw['id']; ?>" <?php echo ($s['payin_gateway_id'] ?? '') == $gw['id'] ? 'selected' : ''; ?>>
                                         <?php echo $gw['name']; ?> (ID: <?php echo $gw['id']; ?>)
                                     </option>
+                                    <?php endif; ?>
                                 <?php endforeach; ?>
                             </select>
+                            <small class="text-muted">Showing only gateways that support Pay-In in <?php echo $mode; ?> mode.</small>
                         </div>
 
                         <div class="form-group mb-20">
-                            <label class="form-label">Default Payout Gateway</label>
+                            <label class="form-label">Default Payout Gateway (<?php echo strtoupper($mode); ?> Mode)</label>
                             <select name="settings[payout_gateway_id]" class="form-control h-50">
                                 <option value="">Select Gateway</option>
                                 <?php foreach($gatewayList as $gw): ?>
+                                    <?php if ($gw[$payoutKey]): ?>
                                     <option value="<?php echo $gw['id']; ?>" <?php echo ($s['payout_gateway_id'] ?? '') == $gw['id'] ? 'selected' : ''; ?>>
                                         <?php echo $gw['name']; ?> (ID: <?php echo $gw['id']; ?>)
                                     </option>
+                                    <?php endif; ?>
                                 <?php endforeach; ?>
                             </select>
+                            <small class="text-muted">Showing only gateways that support Payout in <?php echo $mode; ?> mode.</small>
                         </div>
 
                         <?php if (empty($gatewayList)): ?>
@@ -70,6 +82,38 @@ $gatewayList = getGatewayList();
                                 <i class="fas fa-exclamation-triangle"></i> Unable to fetch gateway list. Please check your API credentials.
                             </div>
                         <?php endif; ?>
+                        
+                        <div class="mt-30">
+                            <h4 class="section-title">Gateway Inventory (API Data)</h4>
+                            <div class="table-responsive" style="border: 1px solid var(--border); border-radius: 12px; max-height: 400px; overflow-y: auto;">
+                                <table style="margin-bottom: 0;">
+                                    <thead style="position: sticky; top: 0; background: var(--bg-elevated); z-index: 1;">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Gateway Name</th>
+                                            <th>Pay-In</th>
+                                            <th>Payout</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach($gatewayList as $gw): ?>
+                                        <tr>
+                                            <td><code class="text-primary fw-700"><?php echo $gw['id']; ?></code></td>
+                                            <td><strong><?php echo $gw['name']; ?></strong></td>
+                                            <td>
+                                                <?php echo $gw['live_payin'] ? '<span class="badge badge-success">LIVE</span> ' : ''; ?>
+                                                <?php echo $gw['test_payin'] ? '<span class="badge badge-light">TEST</span>' : ''; ?>
+                                            </td>
+                                            <td>
+                                                <?php echo $gw['live_payout'] ? '<span class="badge badge-success">LIVE</span> ' : ''; ?>
+                                                <?php echo $gw['test_payout'] ? '<span class="badge badge-light">TEST</span>' : ''; ?>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                     <!-- API Keys Tab -->
                     <div id="tab-apikeys" class="tab-content">

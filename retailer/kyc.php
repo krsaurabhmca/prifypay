@@ -1,8 +1,6 @@
 <?php
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
 
 if (!isLoggedIn()) {
     redirect("../login.php");
