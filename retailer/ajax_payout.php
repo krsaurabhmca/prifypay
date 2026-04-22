@@ -34,14 +34,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Get commissions
     $retComm = getCommissionValue($conn, 'retailer', 'payout');
     $distComm = getCommissionValue($conn, 'distributor', 'payout');
+    $adminComm = getCommissionValue($conn, 'admin', 'payout');
     
-    $retailerFee = calculateCommission($amount, $retComm);
+    $retailerEarn = calculateCommission($amount, $retComm);
     $distributorPart = calculateCommission($amount, $distComm);
+    $adminFee = calculateCommission($amount, $adminComm);
     
-    $totalDeduction = $amount + $retailerFee;
+    $totalPayoutFees = $adminFee + $distributorPart + $retailerEarn;
+    $netPayoutAmount = $amount - $totalPayoutFees;
 
-    if ($userData['wallet_balance'] < $totalDeduction) {
-        echo json_encode(['success' => false, 'message' => 'Insufficient wallet balance. Total required: ' . formatCurrency($totalDeduction)]);
+    if ($netPayoutAmount <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Requested amount is too low to cover payout fees.']);
+        exit();
+    }
+
+    if ($userData['wallet_balance'] < $amount) {
+        echo json_encode(['success' => false, 'message' => 'Insufficient wallet balance. Available: ' . formatCurrency($userData['wallet_balance'])]);
         exit();
     }
 
@@ -54,7 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $currentLimit = $apiBalance;
     }
 
-    if ($currentLimit < $amount) {
+    // The Gateway needs to have enough to cover the Net Payout + Gateway's own internal fee (which is our Admin Fee)
+    if ($currentLimit < $netPayoutAmount) {
         echo json_encode(['success' => false, 'message' => 'Payout Failed: Gateway balance insufficient. Current Limit: ' . formatCurrency($currentLimit)]);
         exit();
     }
@@ -70,17 +79,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $refId = "PAYOUT_" . time() . "_" . $uId;
     $callback = PAYOUT_CALLBACK_URL;
     
-    $res = createPayout($amount, $bene['account_number'], $bene['ifsc'], $bene['bank_name'], $bene['name'], $callback, $refId);
+    // We send the NET amount to the API
+    $res = createPayout($netPayoutAmount, $bene['account_number'], $bene['ifsc'], $bene['bank_name'], $bene['name'], $callback, $refId);
 
     if ($res['success']) {
-        // 1. Deduct from Retailer
-        updateWallet($conn, $uId, $totalDeduction, 'sub');
+        // 1. Deduct Full Requested Amount from Retailer
+        updateWallet($conn, $uId, $amount, 'sub');
         
-        // 2. Add commission to Distributor (if exists)
-        if ($userData['parent_id']) {
+        // 2. Add commissions to Earnings Wallets
+        if ($userData['parent_id'] && $distributorPart > 0) {
             updateEarningsWallet($conn, $userData['parent_id'], $distributorPart, 'add');
-            // Log distributor commission
             logTransaction($conn, $userData['parent_id'], 'commission', $distributorPart, 0, 0, 0, 0, 'success', 'COMM_'.$refId);
+        }
+        
+        if ($retailerEarn > 0) {
+            updateEarningsWallet($conn, $uId, $retailerEarn, 'add');
+            logTransaction($conn, $uId, 'commission', $retailerEarn, 0, 0, 0, $retailerEarn, 'success', 'COMM_RET_'.$refId);
         }
 
         // 3. Extract status and UTR
@@ -90,9 +104,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // If API says processed, mark as success; else mark as pending (await callback)
         $txStatus = ($apiStatus == 'processed' || $apiStatus == 'success') ? 'success' : 'pending';
 
-        logTransaction($conn, $uId, 'payout', $amount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, $txStatus, $refId, $utr, '', $res['raw']);
+        // Log the Payout transaction
+        logTransaction($conn, $uId, 'payout', $amount, $adminFee, $distributorPart, 0, $retailerEarn, $txStatus, $refId, $utr, '', $res['raw'], $bene['id'], $netPayoutAmount);
         
-        echo json_encode(['success' => true, 'message' => 'Payout ' . $txStatus . '!', 'utr' => $utr, 'status' => $txStatus]);
+        echo json_encode(['success' => true, 'message' => 'Payout ' . $txStatus . '! Beneficiary will receive: ' . formatCurrency($netPayoutAmount), 'utr' => $utr, 'status' => $txStatus]);
     } else {
         $errMsg = $res['data']['message'] ?? $res['error'] ?? 'API Error - Please try again later.';
         
