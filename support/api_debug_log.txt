@@ -683,3 +683,6 @@
 [2026-04-22 22:18:50] URL: https://api.slpe.in/api/v2/balance-check | Data: [] | Response: {"result":false,"message":"Access denied from this IP address."} | Error: 
 [2026-04-22 22:19:33] URL: https://api.slpe.in/api/v2/balance-check | Data: [] | Response: {"result":false,"message":"Access denied from this IP address."} | Error: 
 [2026-04-22 22:19:41] URL: https://api.slpe.in/api/v2/balance-check | Data: [] | Response: {"result":false,"message":"Access denied from this IP address."} | Error: 
+[2026-04-22 22:38:06] URL: https://api.slpe.in/api/v2/balance-check | Data: [] | Response: {"result":false,"message":"Access denied from this IP address."} | Error: 
+[2026-04-22 22:39:39] URL: https://api.slpe.in/api/v2/balance-check | Data: [] | Response: {"result":false,"message":"Access denied from this IP address."} | Error: 
+[2026-04-22 22:39:46] URL: https://api.slpe.in/api/v2/gateway-list | Data: [] | Response: {"result":false,"message":"Access denied from this IP address."} | Error: 
