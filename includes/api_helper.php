@@ -59,14 +59,21 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
         FILE_APPEND
     );
 
-    if ($error) {
-        return ["success" => false, "error" => $error, "http_code" => $httpCode, "raw" => $response];
+    $decoded = json_decode($response, true);
+    $isSuccess = ($httpCode >= 200 && $httpCode < 300);
+
+    // SLPE API specific success check
+    if (isset($decoded['result']) && $decoded['result'] === false) {
+        $isSuccess = false;
+    }
+    if (isset($decoded['status']) && $decoded['status'] === false) {
+        $isSuccess = false;
     }
 
     return [
-        "success" => ($httpCode >= 200 && $httpCode < 300),
+        "success" => $isSuccess,
         "http_code" => $httpCode,
-        "data" => json_decode($response, true),
+        "data" => $decoded,
         "raw" => $response
     ];
 }
@@ -91,7 +98,7 @@ function getApiBalance() {
 }
 
 function getGatewayList() {
-    $res = callAPI("GET", "api/gateway-list");
+    $res = callAPI("GET", "gateway-list");
     if($res['success']) {
         return $res['data']['data'] ?? [];
     }

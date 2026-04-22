@@ -1,6 +1,14 @@
 <?php
-require_once '../includes/header.php';
-checkRole('retailer');
+require_once '../includes/db.php';
+require_once '../includes/functions.php';
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+if (!isLoggedIn()) {
+    redirect("../login.php");
+}
+
+$uId = $_SESSION['user_id'];
 
 if (isset($_POST['submit_kyc'])) {
     $aadhar_no = mysqli_real_escape_string($conn, $_POST['aadhar_no']);
@@ -65,6 +73,9 @@ if (isset($_POST['submit_kyc'])) {
         alert('danger', 'Error submitting KYC: ' . mysqli_error($conn));
     }
 }
+
+require_once '../includes/header.php';
+checkRole('retailer');
 
 // Get existing KYC data
 $kycQuery = "SELECT * FROM kyc_details WHERE user_id = $uId";

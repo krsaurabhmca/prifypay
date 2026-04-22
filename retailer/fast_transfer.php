@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/api_helper.php';
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
 checkRole('retailer');
 $uId = $_SESSION['user_id'];
