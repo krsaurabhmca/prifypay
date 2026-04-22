@@ -52,7 +52,16 @@ $recent_tx = mysqli_query($conn, "SELECT t.*, u.name as user_name FROM transacti
         <div class="stat-icon info"><i class="fas fa-server"></i></div>
         <div class="stat-info">
             <span class="stat-label">SLPE Balance</span>
-            <span class="stat-value text-info"><?php echo formatCurrency($api_balance); ?></span>
+            <span class="stat-value text-info">
+                <?php 
+                if (is_array($api_balance)) {
+                    echo formatCurrency($api_balance['payin_balance'] ?? 0) . ' <small>(In)</small>';
+                    echo '<br><span style="font-size: 13px; opacity: 0.8;">' . formatCurrency($api_balance['payout_balance'] ?? 0) . ' (Out)</span>';
+                } else {
+                    echo formatCurrency($api_balance); 
+                }
+                ?>
+            </span>
         </div>
     </div>
     <div class="stat-card animate-in">

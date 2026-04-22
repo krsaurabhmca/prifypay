@@ -85,13 +85,18 @@ function getApiBalance() {
         $apiData = $res['data'];
         $inner = $apiData['data'] ?? $apiData;
         
+        // If the API returns detailed wallet separation, return the full object
+        if (isset($inner['payin_balance']) || isset($inner['payout_balance'])) {
+            return $inner;
+        }
+
         global $conn;
         $apiMode = getSetting($conn, 'api_mode', API_MODE);
 
         if ($apiMode === 'live') {
-            return (float)($inner['wallet_balance'] ?? $apiData['wallet_balance'] ?? 0);
+            return (float)($inner['wallet_balance'] ?? $inner['balance'] ?? 0);
         } else {
-            return (float)($inner['test_wallet_balance'] ?? $apiData['test_wallet_balance'] ?? 0);
+            return (float)($inner['test_wallet_balance'] ?? $inner['test_balance'] ?? 0);
         }
     }
     return 0;

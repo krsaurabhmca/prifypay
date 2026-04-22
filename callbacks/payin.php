@@ -103,6 +103,9 @@ if (!empty($orderId) && in_array($status, $successStatuses)) {
                             $pStatus = ($apiStatus == 'processed' || $apiStatus == 'success') ? 'success' : 'pending';
                             
                             logTransaction($conn, $uId, 'payout', $payoutAmount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, $pStatus, $payoutRef, $payoutUtr, '', $pRes['raw']);
+                        } else {
+                            $errMsg = $pRes['data']['message'] ?? $pRes['error'] ?? 'Auto-Payout Failed';
+                            logTransaction($conn, $uId, 'payout', $payoutAmount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, 'failed', $payoutRef, '', $errMsg, $pRes['raw']);
                         }
                     }
                 }

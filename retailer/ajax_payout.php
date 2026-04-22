@@ -81,6 +81,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         echo json_encode(['success' => true, 'message' => 'Payout ' . $txStatus . '!', 'utr' => $utr, 'status' => $txStatus]);
     } else {
         $errMsg = $res['data']['message'] ?? $res['error'] ?? 'API Error - Please try again later.';
+        
+        // Log the failed attempt
+        logTransaction($conn, $uId, 'payout', $amount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, 'failed', $refId, '', $errMsg, $res['raw']);
+        
         echo json_encode(['success' => false, 'message' => 'Payout Failed: ' . $errMsg]);
     }
     exit();
