@@ -61,9 +61,8 @@ $firstName = explode(' ', $userData['name'])[0];
     <div class="dashboard-wrapper">
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <img src="<?php echo BASE_URL; ?>/assets/images/logo.png" class="logo-light" alt="PrifyPay">
-                <img src="<?php echo BASE_URL; ?>/assets/images/logo-dark.png" class="logo-dark" alt="PrifyPay">
-                <span class="logo-text">PrifyPay</span>
+                <img src="<?php echo BASE_URL; ?>/assets/images/light-logo.png" class="logo-light" alt="PrifyPay">
+                <img src="<?php echo BASE_URL; ?>/assets/images/dark-logo.png" class="logo-dark" alt="PrifyPay">
             </div>
 
             <nav>

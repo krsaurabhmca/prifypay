@@ -131,8 +131,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
         }
 
         .auth-logo img {
-            width: 140px;
-            height: auto;
+            width: auto;
+            height: 120px;
             transition: transform 0.3s ease;
         }
 
@@ -336,7 +336,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
 
     <div class="auth-card animate-in">
         <div class="auth-header">
-            <img src="assets/images/logo.png" alt="PrifyPay Logo" style='height:70px'>
+            <center>
+                <img src="assets/images/light-logo.png" class="logo-light" alt="PrifyPay Logo" style='height:70px'>
+                <img src="assets/images/dark-logo.png" class="logo-dark" alt="PrifyPay Logo" style='height:70px'>
+            </center>
+
 
             <p
                 style="font-size: 13px; color: var(--success); font-weight: 700; margin-top: 5px; letter-spacing: 1px; text-transform: uppercase;">
