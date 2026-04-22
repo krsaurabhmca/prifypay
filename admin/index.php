@@ -12,6 +12,7 @@ $api_balance = getApiBalance();
 
 // Today's stats
 $today_vol = mysqli_fetch_assoc(mysqli_query($conn, "SELECT SUM(amount) as total, COUNT(*) as count FROM transactions WHERE status='success' AND DATE(created_at) = CURDATE()"));
+$pending_kyc = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as count FROM kyc_details WHERE status = 'pending'"));
 
 $recent_tx = mysqli_query($conn, "SELECT t.*, u.name as user_name FROM transactions t JOIN users u ON t.user_id = u.id ORDER BY t.id DESC LIMIT 10");
 ?>
@@ -57,6 +58,13 @@ $recent_tx = mysqli_query($conn, "SELECT t.*, u.name as user_name FROM transacti
         <div class="stat-info">
             <span class="stat-label">Today's Volume</span>
             <span class="stat-value text-success"><?php echo formatCurrency($today_vol['total'] ?? 0); ?></span>
+        </div>
+    </div>
+    <div class="stat-card animate-in">
+        <div class="stat-icon danger"><i class="fas fa-id-card"></i></div>
+        <div class="stat-info">
+            <span class="stat-label">Pending KYC</span>
+            <span class="stat-value text-danger"><?php echo $pending_kyc['count']; ?></span>
         </div>
     </div>
 </div>

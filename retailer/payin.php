@@ -12,6 +12,10 @@ $userRes = mysqli_query($conn, "SELECT * FROM users WHERE id = $uId");
 $userData = mysqli_fetch_assoc($userRes);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payin'])) {
+    if ($userData['kyc_status'] != 'verified') {
+        alert('danger', 'Please complete your KYC verification before performing transactions.');
+        redirect('kyc.php');
+    }
     $amount = (isset($_POST['amount'])) ? (int)$_POST['amount'] : 0;
     
     if ($amount < 10) {

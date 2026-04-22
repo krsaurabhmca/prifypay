@@ -17,6 +17,11 @@ $uId = $_SESSION['user_id'];
 $uQuery = mysqli_query($conn, "SELECT * FROM users WHERE id = $uId");
 $userData = mysqli_fetch_assoc($uQuery);
 
+if ($userData['kyc_status'] != 'verified') {
+    echo json_encode(['success' => false, 'message' => 'Please complete your KYC verification before performing transactions.']);
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $amount = (int)$_POST['amount'];
     $bene_id = (int)$_POST['bene_id'];
@@ -59,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         // 2. Add commission to Distributor (if exists)
         if ($userData['parent_id']) {
-            updateWallet($conn, $userData['parent_id'], $distributorPart, 'add');
+            updateEarningsWallet($conn, $userData['parent_id'], $distributorPart, 'add');
             // Log distributor commission
             logTransaction($conn, $userData['parent_id'], 'commission', $distributorPart, 0, 0, 0, 0, 'success', 'COMM_'.$refId);
         }

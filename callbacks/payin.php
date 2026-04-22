@@ -91,7 +91,7 @@ if (!empty($orderId) && ($status == 'success' || $status == 'completed' || $stat
                         if ($pRes['success']) {
                             updateWallet($conn, $uId, $totalDeduction, 'sub');
                             if ($uData['parent_id']) {
-                                updateWallet($conn, $uData['parent_id'], $distributorPart, 'add');
+                                updateEarningsWallet($conn, $uData['parent_id'], $distributorPart, 'add');
                                 logTransaction($conn, $uData['parent_id'], 'commission', $distributorPart, 0, 0, 0, 0, 'success', 'COMM_'.$payoutRef);
                             }
                             
@@ -113,14 +113,14 @@ if (!empty($orderId) && ($status == 'success' || $status == 'completed' || $stat
             $distributorEarn = calculateCommission($creditAmount, $distComm);
             
             if ($retailerEarn > 0) {
-                updateWallet($conn, $uId, $retailerEarn, 'add');
+                updateEarningsWallet($conn, $uId, $retailerEarn, 'add');
                 logTransaction($conn, $uId, 'commission', $retailerEarn, 0, 0, 0, $retailerEarn, 'success', 'COMM_RET_'.$utrValue);
             }
             
             $userRes = mysqli_query($conn, "SELECT parent_id FROM users WHERE id = $uId");
             $uRow = mysqli_fetch_assoc($userRes);
             if ($uRow['parent_id'] && $distributorEarn > 0) {
-                updateWallet($conn, $uRow['parent_id'], $distributorEarn, 'add');
+                updateEarningsWallet($conn, $uRow['parent_id'], $distributorEarn, 'add');
                 logTransaction($conn, $uRow['parent_id'], 'commission', $distributorEarn, 0, 0, 0, $distributorEarn, 'success', 'COMM_DIST_'.$utrValue);
             }
         }

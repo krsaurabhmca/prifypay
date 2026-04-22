@@ -98,4 +98,24 @@ function validateAadhaar($aadhaar) {
     $clean = str_replace(' ', '', $aadhaar);
     return preg_match('/^[0-9]{12}$/', $clean);
 }
+function updateEarningsWallet($conn, $userId, $amount, $type = 'add') {
+    $amount = (float)$amount;
+    $operator = ($type == 'add') ? '+' : '-';
+    $query = "UPDATE users SET earnings_balance = earnings_balance $operator $amount WHERE id = $userId";
+    return mysqli_query($conn, $query);
+}
+
+function getKycStatusLabel($status) {
+    switch ($status) {
+        case 'verified':
+            return '<span class="status-badge success">Verified</span>';
+        case 'pending':
+            return '<span class="status-badge warning">Pending Approval</span>';
+        case 'rejected':
+            return '<span class="status-badge danger">Rejected</span>';
+        case 'not_submitted':
+        default:
+            return '<span class="status-badge info">Not Submitted</span>';
+    }
+}
 ?>

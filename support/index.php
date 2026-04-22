@@ -1,163 +1,122 @@
 <?php 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+include_once('header.php');
 
-
-function callAPI($method, $endpoint, $data = [], $customHeaders = [])
-{
-    $baseUrl = "https://api.slpe.in/api/v2/";
-
-    // Default SLPE Headers
-    $defaultHeaders = [
-        "api-mode: live",
-        "api-secret: secret_oNkXroVDS0WY8aVt7E4YU3ynkX4CPHH5",
-        "api-key: key_bSO8j6bs3IA0W6gJYuPiNiCks1XVJler",
-        "access-token: access_token_M1mkYsmvSpG9uXSABzbIQ27BomyuL/uQClKFComaWlhwa6S0Y1jZYE8llQXwWzHr4qGUw6RaHTP82sHfPStvYA==",
-        "Content-Type: application/json"
-    ];
-
-    // Merge headers
-    $headers = array_merge($defaultHeaders, $customHeaders);
-
-    $url = $baseUrl . $endpoint;
-
-    $curl = curl_init();
-
-    // Handle GET params
-    if ($method == "GET" && !empty($data)) {
-        $url .= "?" . http_build_query($data);
-    }
-
-    $options = [
-        CURLOPT_URL => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_CUSTOMREQUEST => strtoupper($method),
-        CURLOPT_HTTPHEADER => $headers,
-    ];
-
-    // Handle POST/PUT
-    if (in_array($method, ["POST", "PUT", "PATCH"])) {
-        $options[CURLOPT_POSTFIELDS] = json_encode($data);
-    }
-
-    curl_setopt_array($curl, $options);
-
-    $response = curl_exec($curl);
-    $error = curl_error($curl);
-    $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-
-    curl_close($curl);
-
-    // Error handling
-    if ($error) {
-        return [
-            "status" => false,
-            "error" => $error
-        ];
-    }
-
-    return [
-        "status" => ($httpCode >= 200 && $httpCode < 300),
-        "http_code" => $httpCode,
-        "data" => json_decode($response, true),
-        "raw" => $response
-    ];
-}
-
-//PAYOUT ================================
-
-
-// $payoutData = [
-//     "amount" => 10,
-//     "mode" => "IMPS", // IMPS / NEFT
-//     "call_back_url" => "https://prifypay.morg.in/payout.php",
-//     "gateway_id" => "10",
-//     "reference_id" => "PAYOUT_" . time(),
-//     "bank_account" => [
-//         "name" => "AATIF KHAN",
-//         "ifsc" => "IDFB0043832",
-//         "bank_name" => "IDFC FIRST BANK",
-//         "account_number" => "10144105187"
-//     ]
-// ];
-
-// $response = callAPI('POST','create-payout',$payoutData);
-
-// echo "<pre>";
-// print_r($response);
-
-//PAYOUT ================================
-
-// $data = [
-//     "amount" => 110,
-//     "call_back_url" => "https://prifypay.morg.in/pay_status.php",
-//     "redirection_url" => "https://prifypay.morg.in/return.php", // ✅ ADD
-//     "gateway_id" => "8",
-//     "payment_link_expiry" => date("Y-m-d H:i:s", strtotime("+1 hour")),
-//     "payment_for" => "Utility Payment",
-//     "customer" => [
-//         "name" => "Kumar Saurabh",
-//         "email" => "myofferplant@gmail.com",
-//         "phone" => "9431426600"
-//     ],
-//     "mode" => [
-//         "netbanking" => true,
-//         "card" => true,
-//         "upi" => true,
-//         "wallet" => false
-//     ]
-// ];
-
-// $response = callAPI("POST", "create-order", $data);
-
-// echo "<pre>";
-// print_r($response);
-
-
-// $data = [
-//     "account_number" => "286801000016554",
-//     "ifsc_code" => "IOBA0002868",
-//     "name" => "Gowtham",
-//     "phone" => "9840697693"
-// ];
-
-
-// $res = callAPI("GET", "bbps/categories-list?category_name&id=22068", $data);
-// print_r($res);
-
-// curl --location 'https://api.slpe.in/api/v2/account-validation' \
-// --header 'access-token: access_token_+DKCLZ45Qj/NMc4Z4+jps02MGmAIJDpEwXe4CUDs93OOYWd6rsAIIhbVY+UWbqzUvVd0jn+6fIM44ErC6cuNRg==' \
-// --header 'api-key: key_KLgVZng7yeSQRRPXhwNseoPiXLR4PMXu' \
-// --header 'api-secret: secret_L2I6jz05wJHGAIe8WGCpbi7SQ8XnCth0' \
-// --header 'api-mode: test' \
-// --data '{
-//     "account_number":"286801000016554",
-//     "ifsc_code":"IOBA0002868",
-//     "name":"Gowtham",
-//     "phone":"9840697693"
-// }'
-
-$data = [
-    "account_number" => "916010039686821",
-    "ifsc_code" => "UTIB0001218",
-    "name" => "KUMAR SAURABH",
+// ================= DEFAULT VALUES =================
+$default = [
+    "amount" => "100.00",
+    "gateway_id" => "9",
+    "name" => "Kumar Saurabh",
+    "email" => "myofferplant@gmail.com",
     "phone" => "9431426600"
 ];
 
-$res = callAPI("POST", "account-validation", $data);
+// ================= GATEWAY LIST =================
+$gateways = [
+    ["id"=>1,"name"=>"Razorpay Utility"],
+    ["id"=>3,"name"=>"Slpe Silver Prime EDU"],
+    ["id"=>4,"name"=>"Slpe Gold Travel Lite"],
+    ["id"=>6,"name"=>"Slpe Gold Travel"],
+    ["id"=>7,"name"=>"Slpe Gold Travel Prime"],
+    ["id"=>8,"name"=>"Slpe Silver Edu Lite"],
+    ["id"=>9,"name"=>"Slpe Gold Travel Pure"],
+    ["id"=>14,"name"=>"SLPE GOLD TARVEL FAST"],
+    ["id"=>15,"name"=>"SLPE OCEAN PAY"],
+    ["id"=>17,"name"=>"SLPE Marine Pay"],
+    ["id"=>19,"name"=>"SLPE FAST PAY"]
+];
 
-print_r($res);
+// ================= FORM SUBMIT =================
+if(isset($_POST['pay_now'])){
 
+    $amount = number_format((float)$_POST['amount'], 2, '.', '');
 
+    if($amount <= 0){
+        die("Invalid Amount");
+    }
 
+    $data = [
+        "amount" => $amount,
+        "call_back_url" => "https://prifypay.morg.in/pay_status.php",
+        "redirection_url" => "https://prifypay.morg.in/payout.php",
+        "gateway_id" => $_POST['gateway_id'],
+        "payment_link_expiry" => date("Y-m-d H:i:s", strtotime("+24 hour")),
+        "payment_for" => "Utility Payment",
+        "customer" => [
+            "name" => $_POST['name'],
+            "email" => $_POST['email'],
+            "phone" => $_POST['phone']
+        ],
+        "mode" => [
+            "netbanking" => true,
+            "card" => true,
+            "upi" => true,
+            "wallet" => false
+        ]
+    ];
 
-//$res = callAPI("GET","order-status?order_id=order_Sea8zwOrI9bnnD");
+    // ================= API CALL =================
+    $response = callAPI("POST", "create-order", $data);
 
-//print_r($res);
+    // LOG
+    file_put_contents("callback_log.txt", "Create Payment ". date("Y-m-d H:i:s") . "\n" . json_encode($response) . "\n\n", FILE_APPEND);
 
-//$res = callAPI("GET", "balance-check");
+    // ================= REDIRECT =================
+    if(isset($response['data']['payment_url'])){
+        header("Location: ".$response['data']['payment_url']);
+        exit;
+    } else {
+        echo "<pre>";
+        print_r($response);
+        die("Payment Failed");
+    }
+}
+?>
 
-// print_r($res);
+<!-- ================= UI FORM ================= -->
+<center>
+    
+    <h2>Balance : 
+    <?php
+$res2 = callAPI("GET", "balance-check");
+echo $res2['data']['data']['wallet_balance'];
+?>
+</h2>
+<form method="post">
+
+    <h3>Make Payment</h3>
+    
+    <!-- Amount -->
+    <label>Amount</label>
+    <input 
+        type="number" 
+        name="amount" 
+        step="0.01"
+        min="1"
+        value="<?= $default['amount'] ?>"
+        required
+    ><br><br>
+
+    <!-- Gateway -->
+    <label>Select Gateway</label>
+    <select name="gateway_id" required>
+        <?php foreach($gateways as $g){ ?>
+            <option value="<?= $g['id'] ?>" <?= ($g['id']==$default['gateway_id'])?'selected':'' ?>>
+                <?= $g['name'] ?> (<?= $g['id'] ?>)
+            </option>
+        <?php } ?>
+    </select><br><br>
+    <!-- Customer -->
+    <label>Name</label>
+    <input type="text" name="name" value="<?= $default['name'] ?>" required><br><br>
+
+    <label>Email</label>
+    <input type="email" name="email" value="<?= $default['email'] ?>" required><br><br>
+
+    <label>Phone</label>
+    <input type="text" name="phone" value="<?= $default['phone'] ?>" required><br><br>
+
+    <!-- Submit -->
+    <button type="submit" name="pay_now">Pay Now</button>
+
+</form>
+</center>

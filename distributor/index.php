@@ -23,6 +23,19 @@ $daily_vol = $vol_res['total'] ?? 0;
 $total_vol = mysqli_fetch_assoc(mysqli_query($conn, "SELECT SUM(amount) as total FROM transactions WHERE user_id IN ($ids_str) AND status = 'success'"));
 
 $recent_tx = mysqli_query($conn, "SELECT t.*, u.name as user_name FROM transactions t JOIN users u ON t.user_id = u.id WHERE t.user_id IN ($ids_str) ORDER BY t.id DESC LIMIT 10");
+
+if ($userData['kyc_status'] != 'verified') {
+    $kyc_label = getKycStatusLabel($userData['kyc_status']);
+    echo "<div class='alert alert-warning' style='margin-bottom: 24px;'>
+            <div style='display: flex; align-items: center; justify-content: space-between; width: 100%;'>
+                <div>
+                    <i class='fas fa-exclamation-triangle'></i> 
+                    <strong>KYC Verification Required:</strong> Your current status is $kyc_label. Please complete your KYC to avoid service interruptions.
+                </div>
+                <a href='kyc.php' class='btn btn-primary btn-sm'>Complete KYC</a>
+            </div>
+          </div>";
+}
 ?>
 
 <div class="stats-grid">

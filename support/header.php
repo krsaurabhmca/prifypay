@@ -1,9 +1,9 @@
-<?php
+<?php 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-
+date_default_timezone_set('Asia/Kolkata');
 function callAPI($method, $endpoint, $data = [], $customHeaders = [])
 {
     $baseUrl = "https://api.slpe.in/api/v2/";
@@ -66,9 +66,3 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
         "raw" => $response
     ];
 }
-
-
-
-$res = callAPI("GET", "balance-check");
-
-print_r($res);

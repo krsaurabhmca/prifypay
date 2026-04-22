@@ -66,12 +66,15 @@ $user_count = mysqli_num_rows($users);
                         <small class="text-muted"><?php echo $u['phone']; ?></small>
                     </td>
                     <td>
-                        <div style="font-size: 11px; color: var(--text-muted);">PAN: <?php echo $u['pan_no'] ?: 'N/A'; ?></div>
-                        <div style="font-size: 11px; color: var(--text-muted);">ADH: <?php echo $u['aadhaar_no'] ?: 'N/A'; ?></div>
+                        <?php echo getKycStatusLabel($u['kyc_status']); ?>
+                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">PAN: <?php echo $u['pan_no'] ?: 'N/A'; ?></div>
                     </td>
                     <td><span class="badge badge-role capitalize"><?php echo $u['role']; ?></span></td>
                     <td><?php echo $u['parent_name'] ?? '<span class="text-muted">System</span>'; ?></td>
-                    <td class="fw-700 text-success"><?php echo formatCurrency($u['wallet_balance']); ?></td>
+                    <td class="fw-700">
+                        <div class="text-success" title="Main Wallet"><?php echo formatCurrency($u['wallet_balance']); ?></div>
+                        <div class="text-primary" style="font-size: 11px;" title="Earnings"><?php echo formatCurrency($u['earnings_balance']); ?></div>
+                    </td>
                     <td><span class="badge badge-success">ACTIVE</span></td>
                     <td>
                         <a href="login_as.php?id=<?php echo $u['id']; ?>" class="btn btn-secondary btn-sm" title="Login as this user">

@@ -19,29 +19,3 @@ $order_id   = $data['order_id'] ?? '';
 $status     = $data['status'] ?? '';
 $amount     = $data['amount'] ?? '';
 $txn_id     = $data['transaction_id'] ?? '';
-
-// STEP 5: Database update logic
-// include "db.php";
-
-// if ($order_id != '') {
-
-//     if ($status == "SUCCESS") {
-
-//         // Payment Success
-//         mysqli_query($conn, "UPDATE payments 
-//             SET status='success', txn_id='$txn_id' 
-//             WHERE order_id='$order_id'");
-
-//     } else {
-
-//         // Payment Failed / Pending
-//         mysqli_query($conn, "UPDATE payments 
-//             SET status='failed' 
-//             WHERE order_id='$order_id'");
-//     }
-// }
-
-// // STEP 6: Always return response
-// echo json_encode([
-//     "status" => "received"
-// ]);

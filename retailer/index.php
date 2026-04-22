@@ -9,6 +9,19 @@ $stats_payin = mysqli_fetch_assoc(mysqli_query($conn, "SELECT SUM(amount) as tot
 $bene_count = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as count FROM beneficiaries WHERE user_id = $uId AND status = 'verified'"));
 
 $recent_tx = mysqli_query($conn, "SELECT * FROM transactions WHERE user_id = $uId ORDER BY id DESC LIMIT 8");
+
+if ($userData['kyc_status'] != 'verified') {
+    $kyc_label = getKycStatusLabel($userData['kyc_status']);
+    echo "<div class='alert alert-warning' style='margin-bottom: 24px;'>
+            <div style='display: flex; align-items: center; justify-content: space-between; width: 100%;'>
+                <div>
+                    <i class='fas fa-exclamation-triangle'></i> 
+                    <strong>KYC Verification Required:</strong> Your current status is $kyc_label. Please complete your KYC to enable all features.
+                </div>
+                <a href='kyc.php' class='btn btn-primary btn-sm'>Complete KYC</a>
+            </div>
+          </div>";
+}
 ?>
 
 <div class="stats-grid">

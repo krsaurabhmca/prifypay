@@ -63,6 +63,10 @@ $firstName = explode(' ', $userData['name'])[0];
                         <i class="fas fa-percentage"></i>
                         <span>Commissions</span>
                     </a>
+                    <a href="kyc_requests.php" class="nav-link <?php echo $currentPage == 'kyc_requests.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-id-card"></i>
+                        <span>KYC Requests</span>
+                    </a>
                 <?php endif; ?>
 
                 <?php if ($role == 'retailer'): ?>
@@ -95,6 +99,10 @@ $firstName = explode(' ', $userData['name'])[0];
                 <a href="profile.php" class="nav-link <?php echo $currentPage == 'profile.php' ? 'active' : ''; ?>">
                     <i class="fas fa-user-circle"></i>
                     <span>My Profile</span>
+                </a>
+                <a href="kyc.php" class="nav-link <?php echo $currentPage == 'kyc.php' ? 'active' : ''; ?>">
+                    <i class="fas fa-id-card"></i>
+                    <span>KYC Verification</span>
                 </a>
                 <a href="change_password.php" class="nav-link <?php echo $currentPage == 'change_password.php' ? 'active' : ''; ?>">
                     <i class="fas fa-lock"></i>
@@ -135,10 +143,17 @@ $firstName = explode(' ', $userData['name'])[0];
                         <i class="fas fa-sun"></i>
                     </button>
 
-                    <div class="wallet-badge" title="Internal Wallet Balance">
+                    <div class="wallet-badge" title="Main Wallet Balance">
                         <div>
-                            <div class="wallet-label">Local Wallet</div>
+                            <div class="wallet-label">Main Wallet</div>
                             <div class="wallet-amount"><?php echo formatCurrency($userData['wallet_balance']); ?></div>
+                        </div>
+                    </div>
+
+                    <div class="wallet-badge" style="background: rgba(99, 102, 241, 0.1); color: var(--primary); border-color: rgba(99, 102, 241, 0.2);" title="Earnings from Commissions">
+                        <div>
+                            <div class="wallet-label" style="color: var(--primary);">Earnings</div>
+                            <div class="wallet-amount" style="color: var(--primary);"><?php echo formatCurrency($userData['earnings_balance']); ?></div>
                         </div>
                     </div>
 
