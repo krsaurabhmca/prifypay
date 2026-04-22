@@ -109,12 +109,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         echo json_encode(['success' => true, 'message' => 'Payout ' . $txStatus . '! Beneficiary will receive: ' . formatCurrency($netPayoutAmount), 'utr' => $utr, 'status' => $txStatus]);
     } else {
-        $errMsg = $res['data']['message'] ?? $res['error'] ?? 'API Error - Please try again later.';
+        // Log the failure to the transaction table for audit
+        logTransaction($conn, $uId, 'payout', $amount, $adminFee, $distributorPart, 0, $retailerEarn, 'failed', $refId, '', '', $res['raw'], $bene['id'], $netPayoutAmount);
         
-        // Log the failed attempt
-        logTransaction($conn, $uId, 'payout', $amount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, 'failed', $refId, '', $errMsg, $res['raw']);
-        
-        echo json_encode(['success' => false, 'message' => 'Payout Failed: ' . $errMsg]);
+        echo json_encode(['success' => false, 'message' => 'Payout Failed: ' . $errMsg . ' | Raw: ' . $res['raw']]);
     }
     exit();
 }
