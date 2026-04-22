@@ -49,8 +49,6 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
     $error = curl_error($curl);
     $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
-    curl_close($curl);
-
     // Error handling
     if ($error) {
         return [

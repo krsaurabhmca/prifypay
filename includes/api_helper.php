@@ -54,8 +54,6 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
     $error = curl_error($curl);
     $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
-    curl_close($curl);
-
     file_put_contents(__DIR__ . '/../support/api_debug_log.txt', 
         date('[Y-m-d H:i:s] ') . "URL: $url | Data: $postData | Response: $response | Error: $error" . PHP_EOL, 
         FILE_APPEND
@@ -186,7 +184,6 @@ function callEkycAPI($endpoint, $params = []) {
     
     $response = curl_exec($curl);
     $error = curl_error($curl);
-    curl_close($curl);
     
     if ($error) return ['status' => 'Failure', 'message' => $error];
     return json_decode($response, true);
