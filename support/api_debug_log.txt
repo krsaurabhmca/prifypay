@@ -678,3 +678,5 @@
     </body>
 </html>
  | Error: 
+[2026-04-22 22:02:02] URL: https://api.slpe.in/api/v2/balance-check | Data: [] | Response: {"result":false,"message":"Access denied from this IP address."} | Error: 
+[2026-04-22 22:02:05] URL: https://api.slpe.in/api/v2/gateway-list | Data: [] | Response: {"result":false,"message":"Access denied from this IP address."} | Error: 

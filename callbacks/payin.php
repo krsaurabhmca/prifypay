@@ -60,13 +60,32 @@ if (!empty($orderId) && in_array($status, $successStatuses)) {
             $uId = $tx['user_id'];
             $creditAmount = $tx['amount'];
             
-            // 1. Credit wallet
-            updateWallet($conn, $uId, $creditAmount, 'add');
+            // 4. Calculate Commissions & Net Credit
+            $retComm = getCommissionValue($conn, 'retailer', 'payin');
+            $distComm = getCommissionValue($conn, 'distributor', 'payin');
+            $adminComm = getCommissionValue($conn, 'admin', 'payin');
+            
+            $retailerEarn = calculateCommission($creditAmount, $retComm);
+            $distributorEarn = calculateCommission($creditAmount, $distComm);
+            $adminFee = calculateCommission($creditAmount, $adminComm);
+            
+            $totalDeductions = $adminFee + $distributorEarn + $retailerEarn;
+            $netCredit = $creditAmount - $totalDeductions;
+
+            // 1. Credit Main Wallet (Net Amount)
+            updateWallet($conn, $uId, $netCredit, 'add');
             
             // 2. Update transaction status
             $utrValue = !empty($txnId) ? $txnId : $orderId;
             $rawBodyEsc = mysqli_real_escape_string($conn, $rawBody);
-            mysqli_query($conn, "UPDATE transactions SET status = 'success', utr = '$utrValue', api_response = '$rawBodyEsc' WHERE id = " . $tx['id']);
+            mysqli_query($conn, "UPDATE transactions SET 
+                status = 'success', 
+                utr = '$utrValue', 
+                fee = $adminFee,
+                commission_retailer = $retailerEarn,
+                commission_distributor = $distributorEarn,
+                api_response = '$rawBodyEsc' 
+                WHERE id = " . $tx['id']);
             
             // 3. Handle Auto-Payout (Fast Transfer)
             if (!empty($tx['payout_bene_id']) && !empty($tx['payout_amount'])) {
@@ -83,11 +102,11 @@ if (!empty($orderId) && in_array($status, $successStatuses)) {
                     $payoutComm = getCommissionValue($conn, 'retailer', 'payout');
                     $distComm = getCommissionValue($conn, 'distributor', 'payout');
                     
-                    $retailerFee = calculateCommission($payoutAmount, $payoutComm);
-                    $distributorPart = calculateCommission($payoutAmount, $distComm);
-                    $totalDeduction = $payoutAmount + $retailerFee;
+                    $payoutRetailerFee = calculateCommission($payoutAmount, $payoutComm);
+                    $payoutDistributorPart = calculateCommission($payoutAmount, $distComm);
+                    $totalPayoutDeduction = $payoutAmount + $payoutRetailerFee;
                     
-                    if ($uData['wallet_balance'] >= $totalDeduction) {
+                    if ($uData['wallet_balance'] >= $totalPayoutDeduction) {
                         // PRE-CHECK Gateway Balance
                         $apiBalance = getApiBalance();
                         if (is_array($apiBalance)) {
@@ -99,39 +118,33 @@ if (!empty($orderId) && in_array($status, $successStatuses)) {
 
                         if ($currentLimit < $payoutAmount) {
                             $payoutRef = "AUTO_FAIL_" . time() . "_" . $uId;
-                            logTransaction($conn, $uId, 'payout', $payoutAmount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, 'failed', $payoutRef, '', 'Gateway balance insufficient: ' . $currentLimit);
+                            logTransaction($conn, $uId, 'payout', $payoutAmount, $payoutRetailerFee, $payoutDistributorPart, ($payoutRetailerFee - $payoutDistributorPart), $payoutRetailerFee, 'failed', $payoutRef, '', 'Gateway balance insufficient: ' . $currentLimit);
                         } else {
                             $payoutRef = "AUTO_" . time() . "_" . $uId;
                             $pRes = createPayout($payoutAmount, $bene['account_number'], $bene['ifsc'], $bene['bank_name'], $bene['name'], PAYOUT_CALLBACK_URL, $payoutRef);
                             
                             if ($pRes['success']) {
-                                updateWallet($conn, $uId, $totalDeduction, 'sub');
+                                updateWallet($conn, $uId, $totalPayoutDeduction, 'sub');
                                 if ($uData['parent_id']) {
-                                    updateEarningsWallet($conn, $uData['parent_id'], $distributorPart, 'add');
-                                    logTransaction($conn, $uData['parent_id'], 'commission', $distributorPart, 0, 0, 0, 0, 'success', 'COMM_'.$payoutRef);
+                                    updateEarningsWallet($conn, $uData['parent_id'], $payoutDistributorPart, 'add');
+                                    logTransaction($conn, $uData['parent_id'], 'commission', $payoutDistributorPart, 0, 0, 0, 0, 'success', 'COMM_'.$payoutRef);
                                 }
                                 
                                 $apiStatus = strtolower($pRes['data']['status'] ?? '');
                                 $payoutUtr = $pRes['data']['utr'] ?? $pRes['data']['transaction_id'] ?? '';
                                 $pStatus = ($apiStatus == 'processed' || $apiStatus == 'success') ? 'success' : 'pending';
                                 
-                                logTransaction($conn, $uId, 'payout', $payoutAmount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, $pStatus, $payoutRef, $payoutUtr, '', $pRes['raw']);
+                                logTransaction($conn, $uId, 'payout', $payoutAmount, $payoutRetailerFee, $payoutDistributorPart, ($payoutRetailerFee - $payoutDistributorPart), $payoutRetailerFee, $pStatus, $payoutRef, $payoutUtr, '', $pRes['raw']);
                             } else {
                                 $errMsg = $pRes['data']['message'] ?? $pRes['error'] ?? 'Auto-Payout Failed';
-                                logTransaction($conn, $uId, 'payout', $payoutAmount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, 'failed', $payoutRef, '', $errMsg, $pRes['raw']);
+                                logTransaction($conn, $uId, 'payout', $payoutAmount, $payoutRetailerFee, $payoutDistributorPart, ($payoutRetailerFee - $payoutDistributorPart), $payoutRetailerFee, 'failed', $payoutRef, '', $errMsg, $pRes['raw']);
                             }
                         }
                     }
                 }
             }
 
-            // 4. Handle Payin Commissions (if configured)
-            $retComm = getCommissionValue($conn, 'retailer', 'payin');
-            $distComm = getCommissionValue($conn, 'distributor', 'payin');
-            
-            $retailerEarn = calculateCommission($creditAmount, $retComm);
-            $distributorEarn = calculateCommission($creditAmount, $distComm);
-            
+            // 4. Update Earnings Wallets
             if ($retailerEarn > 0) {
                 updateEarningsWallet($conn, $uId, $retailerEarn, 'add');
                 logTransaction($conn, $uId, 'commission', $retailerEarn, 0, 0, 0, $retailerEarn, 'success', 'COMM_RET_'.$utrValue);
