@@ -107,15 +107,18 @@ function updateEarningsWallet($conn, $userId, $amount, $type = 'add') {
 
 function getKycStatusLabel($status) {
     switch ($status) {
-        case 'verified':
-            return '<span class="status-badge success">Verified</span>';
-        case 'pending':
-            return '<span class="status-badge warning">Pending Approval</span>';
-        case 'rejected':
-            return '<span class="status-badge danger">Rejected</span>';
-        case 'not_submitted':
-        default:
-            return '<span class="status-badge info">Not Submitted</span>';
+        case 'verified': return '<span class="badge badge-success">VERIFIED</span>';
+        case 'pending': return '<span class="badge badge-warning">PENDING</span>';
+        case 'rejected': return '<span class="badge badge-danger">REJECTED</span>';
+        default: return '<span class="badge badge-secondary">NOT SUBMITTED</span>';
     }
+}
+
+function getSetting($conn, $key, $default = '') {
+    $res = mysqli_query($conn, "SELECT setting_value FROM settings WHERE setting_key = '$key'");
+    if ($row = mysqli_fetch_assoc($res)) {
+        return $row['setting_value'];
+    }
+    return $default;
 }
 ?>

@@ -9,6 +9,8 @@ $total_retailers = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as co
 
 $wallet_pool = mysqli_fetch_assoc(mysqli_query($conn, "SELECT SUM(wallet_balance) as total FROM users"));
 $api_balance = getApiBalance();
+$kyc_balance_raw = getKYCBalance();
+$kyc_balance = ($kyc_balance_raw['status'] == 'Success') ? $kyc_balance_raw['balance'] : 0;
 
 // Today's stats
 $today_vol = mysqli_fetch_assoc(mysqli_query($conn, "SELECT SUM(amount) as total, COUNT(*) as count FROM transactions WHERE status='success' AND DATE(created_at) = CURDATE()"));
@@ -47,10 +49,17 @@ $recent_tx = mysqli_query($conn, "SELECT t.*, u.name as user_name FROM transacti
         </div>
     </div>
     <div class="stat-card animate-in">
-        <div class="stat-icon"><i class="fas fa-server"></i></div>
+        <div class="stat-icon info"><i class="fas fa-server"></i></div>
         <div class="stat-info">
-            <span class="stat-label">API Balance</span>
+            <span class="stat-label">SLPE Balance</span>
             <span class="stat-value text-info"><?php echo formatCurrency($api_balance); ?></span>
+        </div>
+    </div>
+    <div class="stat-card animate-in">
+        <div class="stat-icon warning"><i class="fas fa-id-card"></i></div>
+        <div class="stat-info">
+            <span class="stat-label">KYC API Balance</span>
+            <span class="stat-value text-warning"><?php echo formatCurrency($kyc_balance); ?></span>
         </div>
     </div>
     <div class="stat-card animate-in">

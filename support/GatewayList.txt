@@ -1,0 +1,22 @@
+curl --location 'https://api.slpe.in/api/v2/api/gateway-list' \
+--header 'access-token: access_token_+DKCLZ45Qj/NMc4Z4+jps02MGmAIJDpEwXe4CUDs93OOYWd6rsAIIhbVY+UWbqzUvVd0jn+6fIM44ErC6cuNRg==' \
+--header 'api-key: key_KLgVZng7yeSQRRPXhwNseoPiXLR4PMXu' \
+--header 'api-secret: secret_L2I6jz05wJHGAIe8WGCpbi7SQ8XnCth0' \
+--header 'api-mode: test' \
+--data ''
+
+
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Razorpay",
+      "test_payin": true,
+      "test_payout": true,
+      "live_payin": true,
+      "live_payout": false
+    }
+  ],
+  "result": true,
+  "code": 200
+}

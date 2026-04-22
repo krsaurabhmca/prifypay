@@ -2,14 +2,21 @@
 
 function callAPI($method, $endpoint, $data = [], $customHeaders = [])
 {
+    global $conn;
     $baseUrl = API_BASE_URL;
 
-    // Default SLPE Headers - Dynamic from config
+    // Fetch dynamic credentials from settings
+    $apiMode = getSetting($conn, 'api_mode', API_MODE);
+    $apiSecret = getSetting($conn, 'api_secret', API_SECRET);
+    $apiKey = getSetting($conn, 'api_key', API_KEY);
+    $accessToken = getSetting($conn, 'access_token', ACCESS_TOKEN);
+
+    // Default SLPE Headers
     $defaultHeaders = [
-        "api-mode: " . API_MODE,
-        "api-secret: " . API_SECRET,
-        "api-key: " . API_KEY,
-        "access-token: " . ACCESS_TOKEN,
+        "api-mode: " . $apiMode,
+        "api-secret: " . $apiSecret,
+        "api-key: " . $apiKey,
+        "access-token: " . $accessToken,
         "Content-Type: application/json"
     ];
 
@@ -69,22 +76,28 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
 // Balance Check Helper
 function getApiBalance() {
     $res = callAPI("GET", "balance-check");
-    
-    // Optional: Log raw response for debugging on live server
-    // file_put_contents(__DIR__ . '/../support/balance_debug_log.txt', date('[Y-m-d H:i:s] ') . $res['raw'] . PHP_EOL, FILE_APPEND);
-
     if($res['success']) {
         $apiData = $res['data'];
-        // The API might return balance directly in root or inside a data key
         $inner = $apiData['data'] ?? $apiData;
         
-        if (API_MODE === 'live') {
+        global $conn;
+        $apiMode = getSetting($conn, 'api_mode', API_MODE);
+
+        if ($apiMode === 'live') {
             return (float)($inner['wallet_balance'] ?? $apiData['wallet_balance'] ?? 0);
         } else {
             return (float)($inner['test_wallet_balance'] ?? $apiData['test_wallet_balance'] ?? 0);
         }
     }
     return 0;
+}
+
+function getGatewayList() {
+    $res = callAPI("GET", "api/gateway-list");
+    if($res['success']) {
+        return $res['data']['data'] ?? [];
+    }
+    return [];
 }
 
 // Account Validation Helper
@@ -100,11 +113,14 @@ function validateAccount($account, $ifsc, $name, $phone) {
 
 // Create Payin Order
 function createPayinOrder($amount, $callback, $redirect, $customer) {
+    global $conn;
+    $gateway_id = getSetting($conn, 'payin_gateway_id', PAYIN_GATEWAY_ID);
+    
     $data = [
         "amount" => (int)$amount,
         "call_back_url" => $callback,
         "redirection_url" => $redirect,
-        "gateway_id" => PAYIN_GATEWAY_ID,
+        "gateway_id" => $gateway_id,
         "payment_link_expiry" => date("Y-m-d H:i:s", strtotime("+24 hour")),
         "payment_for" => "Add Money to Wallet",
         "customer" => $customer,
@@ -125,11 +141,14 @@ function getPayinStatus($orderId) {
 
 // Create Payout
 function createPayout($amount, $account, $ifsc, $bank_name, $name, $callback, $reference) {
+    global $conn;
+    $gateway_id = getSetting($conn, 'payout_gateway_id', PAYOUT_GATEWAY_ID);
+
     $payoutData = [
         "amount" => (int)$amount,
         "mode" => "IMPS",
         "call_back_url" => $callback,
-        "gateway_id" => PAYOUT_GATEWAY_ID,
+        "gateway_id" => $gateway_id,
         "reference_id" => $reference,
         "bank_account" => [
             "name" => $name,
@@ -144,5 +163,61 @@ function createPayout($amount, $account, $ifsc, $bank_name, $name, $callback, $r
 // Check Payout Status
 function getPayoutStatus($referenceId) {
     return callAPI("GET", "payout-status", ["reference_id" => $referenceId]);
+}
+// --- EKYCHUB API Helpers (DigiLocker & OTP) ---
+
+function callEkycAPI($endpoint, $params = []) {
+    global $conn;
+    $username = getSetting($conn, 'ekyc_username');
+    $token = getSetting($conn, 'ekyc_token');
+    
+    $params['username'] = $username;
+    $params['token'] = $token;
+    
+    $url = "https://connect.ekychub.in/v3/" . $endpoint . "?" . http_build_query($params);
+    
+    $curl = curl_init();
+    curl_setopt_array($curl, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_TIMEOUT => 30
+    ]);
+    
+    $response = curl_exec($curl);
+    $error = curl_error($curl);
+    curl_close($curl);
+    
+    if ($error) return ['status' => 'Failure', 'message' => $error];
+    return json_decode($response, true);
+}
+
+function createDigilockerUrl($type, $orderId, $redirectUrl) {
+    $endpoint = ($type == 'PAN') ? 'digilocker/create_url_pan' : 'digilocker/create_url_aadhaar';
+    return callEkycAPI($endpoint, [
+        'orderid' => $orderId,
+        'redirect_url' => $redirectUrl
+    ]);
+}
+
+function getDigilockerDocument($verificationId, $referenceId, $orderId, $docType) {
+    return callEkycAPI('digilocker/get_document', [
+        'verification_id' => $verificationId,
+        'reference_id' => $referenceId,
+        'orderid' => $orderId,
+        'document_type' => $docType
+    ]);
+}
+
+function sendOtpSms($number, $otp, $orderId) {
+    return callEkycAPI('verification/otp_sms', [
+        'number' => $number,
+        'otp' => $otp,
+        'orderid' => $orderId
+    ]);
+}
+
+function getKYCBalance() {
+    return callEkycAPI('verification/balance');
 }
 ?>

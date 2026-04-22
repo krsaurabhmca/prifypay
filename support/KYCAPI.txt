@@ -1,0 +1,92 @@
+Description: This API verifies the validity of a Aadhaar number , pan using the provided details. It returns the verification status based on the Aadhaar Number and pan through Digilocker.:
+
+Step 1 : Create Digilocker Aadhaar and Pan Redirect URL
+Aaadhaar Request
+
+Request URL: GET : https://connect.ekychub.in/v3/digilocker/create_url_aadhaar?username=9431426600&token=10008398b8f2b1c56979c553f4e76fd4&redirect_url=https://xxx_url.com&orderid=xxxx
+
+PAN Request
+
+Request URL: GET : https://connect.ekychub.in/v3/digilocker/create_url_pan?username=9431426600&token=10008398b8f2b1c56979c553f4e76fd4&redirect_url=https://xxx_url.com&orderid=xxxx
+
+Success Response
+
+{"verification_id":"2493170","reference_id":551863,"url":"https:\/\/connect.ekychub.in\/v3\/digilocker\/redirect?data=j3b8m1oo5el0","status":"Success","document_requested":["AADHAAR"],"user_flow":"signup","redirect_url":"https:\/\/connect.ekychub.in\/","message":"Digilocker URL is created","txid":2493170}
+
+Failure Response
+
+{"type":"validation_error","code":"redirect_url_value_invalid","message":"Digilocker URL is not created","status":"Failure","txid":2498718}
+
+Paramenter Details
+
+username: username provided by ekychub
+token: token provided by ekychub
+redirect_url: User will be redirected after digilocker verification.
+orderid: A unique orderid for the verification request
+Step 2 : Get Digilocker Document
+Request URL: GET : https://connect.ekychub.in/v3/digilocker/get_document?username=9431426600&token=10008398b8f2b1c56979c553f4e76fd4&verification_id=xxx&reference_id=xxx&orderid=xxxx&document_type=XXXX
+
+Success Response
+
+{ "reference_id": 5533863, "verification_id": "24933070", "status": "Success", "name": "XXXX Kumar Agarwal", "uid": "xxxxxxxx5754", "dob": "10-03-1987", "gender": "M", "care_of": "", "address": "Ahinsa XXX, 1st Floor, Flat No 101, Block A, Ward No 25, XX Sarani, XX (M.Corp.), XX, , XX Bazar, XX XX, India, 73400XX", "split_address": { "country": "India", "dist": "XXXX", "house": "XXX XXX, 1st Floor, Flat No 101, Block A", "landmark": "XXX", "pincode": "7340XXX05", "po": "XXX Bazar", "state": "WXXXest XXX", "street": "Ward No 25, XXX Sarani", "subdist": "", "vtc": "XXX (M.Corp.)" }, "year_of_birth": "1987", "photo_link": "base64_image", "xml_file": "aadhaar_data.xml", "message": "Aadhaar Card Exists" }
+
+Failure Response
+
+{"type":"validation_error","code":"reference_id_value_invalid","message":"reference_id is invalid.","status":"Failure","txid":2499258}
+
+Paramenter Details
+
+username: username provided by ekychub
+token: token provided by ekychub
+verification_id: You will get verification_id in step 1 Create Digilocker aadhaar or pan api response.
+reference_id: You will get reference_id in step 1 Create Digilocker aadhaar or pan api response .
+orderid: A unique orderid for the verification request
+document_type: For pan Pass PAN for aadhaar pass AADHAAR
+
+
+Description: This API allows you send otp to any indian mobile number.
+
+Request URL: GET: https://connect.ekychub.in/v3/verification/otp_sms?username=9431426600&token=10008398b8f2b1c56979c553f4e76fd4&number=xxx&otp=xxxxx&orderid=xxxx
+
+Success Response:
+
+{ "status": "Success", "number": "7585835XXX", "message": "OTP Sent successfully" }
+
+Failure Response:
+
+{ "status": "Failure", "message": "Low balance in API" }
+
+Parameter Details:
+
+username: username provided by ekychub
+token: token provided by ekychub
+number: Mobile Number
+orderid: Unique order id provided by you
+
+
+API Username :
+9431426600
+API Token :
+10008398b8f2b1c56979c553f4e76fd4
+White list IP Address :
+147.93.101.81
+Password
+Please Enter  Password*
+
+
+Description: This API allows you to check your wallet balance. :
+
+Request URL: GET : https://connect.ekychub.in/v3/verification/balance?username=9431426600&token=10008398b8f2b1c56979c553f4e76fd4
+
+Success Response
+
+{"status":"Success","balance":"1511.116"}
+
+Failure Response
+
+{"status":"Failure","message":"invalid username or token "}
+
+Paramenter Details
+
+username: username provided by ekychub
+token: token provided by ekychub

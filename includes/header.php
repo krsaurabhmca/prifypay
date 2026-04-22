@@ -15,6 +15,17 @@ $userData = mysqli_fetch_assoc($userRes);
 
 $role = $_SESSION['role'];
 $currentPage = basename($_SERVER['PHP_SELF']);
+
+// OTP Verification Check
+$otp_mobile = getSetting($conn, 'otp_mobile_enabled', '0');
+$otp_email = getSetting($conn, 'otp_email_enabled', '0');
+
+if ($currentPage != 'verify.php' && $role != 'admin') {
+    if (($otp_mobile == '1' && !$userData['mobile_verified']) || ($otp_email == '1' && !$userData['email_verified'])) {
+        header("Location: " . BASE_URL . "/verify.php");
+        exit();
+    }
+}
 $userInitials = strtoupper(substr($userData['name'], 0, 1));
 $firstName = explode(' ', $userData['name'])[0];
 ?>
@@ -24,6 +35,7 @@ $firstName = explode(' ', $userData['name'])[0];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo ucfirst($role); ?> Dashboard - PrifyPay</title>
+    <link rel="shortcut icon" href="<?php echo BASE_URL; ?>/assets/images/logo.png" type="image/png">
     <meta name="description" content="PrifyPay - Secure Payment Portal for <?php echo ucfirst($role); ?>">
     <link rel="stylesheet" href="../assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -42,8 +54,8 @@ $firstName = explode(' ', $userData['name'])[0];
     <div class="dashboard-wrapper">
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <div class="logo-icon"><i class="fas fa-bolt"></i></div>
-                <span class="logo-text">PrifyPay</span>
+                <img src="<?php echo BASE_URL; ?>/assets/images/logo.png" alt="PrifyPay" style="height: 40px; width: auto; object-fit: contain;">
+                <span class="logo-text" style="display: none;">PrifyPay</span>
             </div>
             
             <nav>
@@ -63,9 +75,17 @@ $firstName = explode(' ', $userData['name'])[0];
                         <i class="fas fa-percentage"></i>
                         <span>Commissions</span>
                     </a>
-                    <a href="kyc_requests.php" class="nav-link <?php echo $currentPage == 'kyc_requests.php' ? 'active' : ''; ?>">
+                    <a href="kyc.php" class="nav-link <?php echo ($currentPage == 'kyc.php' || $currentPage == 'kyc_requests.php') ? 'active' : ''; ?>">
                         <i class="fas fa-id-card"></i>
                         <span>KYC Requests</span>
+                    </a>
+                    <a href="tickets.php" class="nav-link <?php echo $currentPage == 'tickets.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-ticket-alt"></i>
+                        <span>Support Tickets</span>
+                    </a>
+                    <a href="settings.php" class="nav-link <?php echo $currentPage == 'settings.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-cog"></i>
+                        <span>Gateway Settings</span>
                     </a>
                 <?php endif; ?>
 
@@ -109,20 +129,21 @@ $firstName = explode(' ', $userData['name'])[0];
                     <span>Change Password</span>
                 </a>
 
+                <div class="nav-section-title">Support</div>
+                <a href="support.php" class="nav-link <?php echo $currentPage == 'support.php' ? 'active' : ''; ?>">
+                    <i class="fas fa-headset"></i>
+                    <span>Help & Support</span>
+                </a>
+
                 <a href="../logout.php" class="nav-link nav-danger">
-                    <i class="fas fa-right-from-bracket"></i>
+                    <i class="fas fa-sign-out-alt"></i>
                     <span>Logout</span>
                 </a>
             </nav>
 
-            <div class="sidebar-user-card">
-                <div class="user-info">
-                    <div class="user-avatar"><?php echo $userInitials; ?></div>
-                    <div class="user-details">
-                        <div class="user-name"><?php echo $userData['name']; ?></div>
-                        <div class="user-role"><?php echo $role; ?></div>
-                    </div>
-                </div>
+            <div class="sidebar-footer">
+                <div class="tagline">Safe | Secure | Seamless</div>
+                <div class="version">v3.0.2</div>
             </div>
         </aside>
 
@@ -157,7 +178,7 @@ $firstName = explode(' ', $userData['name'])[0];
                         </div>
                     </div>
 
-                    <?php if (in_array($role, ['admin', 'retailer'])): 
+                    <?php if ($role == 'admin'): 
                         $apiBal = getApiBalance();
                     ?>
                     <div class="wallet-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.2);" title="Gateway Available Limit">

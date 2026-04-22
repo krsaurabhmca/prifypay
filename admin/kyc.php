@@ -68,10 +68,10 @@ $result = mysqli_query($conn, $query);
                                 </td>
                                 <td>
                                     <div style="display: flex; gap: 5px;">
-                                        <a href="../<?php echo $row['aadhar_front']; ?>" target="_blank" title="Aadhaar Front" class="btn btn-sm btn-light"><i class="fas fa-image"></i> AF</a>
-                                        <a href="../<?php echo $row['aadhar_back']; ?>" target="_blank" title="Aadhaar Back" class="btn btn-sm btn-light"><i class="fas fa-image"></i> AB</a>
-                                        <a href="../<?php echo $row['pan_card']; ?>" target="_blank" title="PAN Card" class="btn btn-sm btn-light"><i class="fas fa-image"></i> PAN</a>
-                                        <a href="../<?php echo $row['passbook_check']; ?>" target="_blank" title="Passbook" class="btn btn-sm btn-light"><i class="fas fa-image"></i> PB</a>
+                                        <button type="button" onclick="previewDoc('../<?php echo $row['aadhar_front']; ?>', 'Aadhaar Front')" title="Aadhaar Front" class="btn btn-sm btn-light"><i class="fas fa-image"></i> AF</button>
+                                        <button type="button" onclick="previewDoc('../<?php echo $row['aadhar_back']; ?>', 'Aadhaar Back')" title="Aadhaar Back" class="btn btn-sm btn-light"><i class="fas fa-image"></i> AB</button>
+                                        <button type="button" onclick="previewDoc('../<?php echo $row['pan_card']; ?>', 'PAN Card')" title="PAN Card" class="btn btn-sm btn-light"><i class="fas fa-image"></i> PAN</button>
+                                        <button type="button" onclick="previewDoc('../<?php echo $row['passbook_check']; ?>', 'Passbook')" title="Passbook" class="btn btn-sm btn-light"><i class="fas fa-image"></i> PB</button>
                                     </div>
                                 </td>
                                 <td><?php echo date('d M Y', strtotime($row['created_at'])); ?></td>
@@ -90,6 +90,27 @@ $result = mysqli_query($conn, $query);
                     <?php endif; ?>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Document Preview Modal -->
+<div id="docPreviewModal" class="modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(5px);">
+    <div class="modal-content" style="background:transparent; margin:2% auto; width:90%; max-width:1000px; position:relative; display:flex; flex-direction:column; align-items:center;">
+        <div style="background:var(--bg-card); width:100%; padding:15px; border-radius:12px 12px 0 0; display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border);">
+            <h3 id="previewTitle" style="margin:0;">Document Preview</h3>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <div class="zoom-controls" style="display:flex; align-items:center; background:var(--bg-elevated); padding:5px 15px; border-radius:50px; gap:10px;">
+                    <button type="button" onclick="zoomDoc(-0.2)" class="btn btn-sm btn-light" style="border-radius:50%; width:30px; height:30px; padding:0;"><i class="fas fa-minus"></i></button>
+                    <span id="zoomLevel" style="font-weight:700; min-width:40px; text-align:center;">100%</span>
+                    <button type="button" onclick="zoomDoc(0.2)" class="btn btn-sm btn-light" style="border-radius:50%; width:30px; height:30px; padding:0;"><i class="fas fa-plus"></i></button>
+                    <button type="button" onclick="resetZoom()" class="btn btn-sm btn-primary" style="margin-left:5px;">Reset</button>
+                </div>
+                <button type="button" class="btn btn-danger" onclick="closeDocModal()" style="border-radius:50%; width:36px; height:36px; padding:0;"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <div id="previewContainer" style="width:100%; height:75vh; background:var(--bg-card); border-radius:0 0 12px 12px; overflow:auto; display:flex; align-items:center; justify-content:center; padding:20px; border:1px solid var(--border); border-top:none; position:relative;">
+            <img id="previewImage" src="" style="max-width:100%; transition:transform 0.2s ease-out; cursor:grab;" onmousedown="startDrag(event)">
         </div>
     </div>
 </div>
@@ -116,6 +137,37 @@ $result = mysqli_query($conn, $query);
 </div>
 
 <script>
+let currentScale = 1;
+
+function previewDoc(url, title) {
+    document.getElementById('previewImage').src = url;
+    document.getElementById('previewTitle').innerText = title;
+    document.getElementById('docPreviewModal').style.display = 'block';
+    resetZoom();
+}
+
+function zoomDoc(delta) {
+    currentScale += delta;
+    if(currentScale < 0.2) currentScale = 0.2;
+    if(currentScale > 5) currentScale = 5;
+    applyZoom();
+}
+
+function resetZoom() {
+    currentScale = 1;
+    applyZoom();
+}
+
+function applyZoom() {
+    const img = document.getElementById('previewImage');
+    img.style.transform = `scale(${currentScale})`;
+    document.getElementById('zoomLevel').innerText = Math.round(currentScale * 100) + '%';
+}
+
+function closeDocModal() {
+    document.getElementById('docPreviewModal').style.display = 'none';
+}
+
 function approveKYC(id) {
     document.getElementById('modalKycId').value = id;
     document.getElementById('modalAction').value = 'verified';
@@ -138,6 +190,34 @@ function rejectKYC(id) {
 
 function closeModal() {
     document.getElementById('kycModal').style.display = 'none';
+}
+
+// Drag functionality for zoomed image
+function startDrag(e) {
+    if (currentScale <= 1) return;
+    const container = document.getElementById('previewContainer');
+    const img = document.getElementById('previewImage');
+    
+    let startX = e.clientX;
+    let startY = e.clientY;
+    let startScrollLeft = container.scrollLeft;
+    let startScrollTop = container.scrollTop;
+
+    img.style.cursor = 'grabbing';
+
+    function onMouseMove(e) {
+        container.scrollLeft = startScrollLeft - (e.clientX - startX);
+        container.scrollTop = startScrollTop - (e.clientY - startY);
+    }
+
+    function onMouseUp() {
+        img.style.cursor = 'grab';
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+    }
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
 }
 </script>
 

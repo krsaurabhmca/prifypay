@@ -138,34 +138,113 @@ $kycData = mysqli_fetch_assoc($kycRes);
                         <div class="col-md-12">
                             <h4 style="margin: 20px 0 10px; color: var(--primary);">Upload Documents</h4>
                         </div>
+                        
+                        <!-- Aadhaar Front -->
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">Aadhaar Front</label>
-                                <input type="file" name="aadhar_front" class="form-control" <?php echo !isset($kycData['aadhar_front']) ? 'required' : ''; ?>>
+                                <div class="file-preview-container" id="preview_aadhar_front">
+                                    <?php if (isset($kycData['aadhar_front'])): ?>
+                                        <img src="../<?php echo $kycData['aadhar_front']; ?>" alt="Aadhaar Front">
+                                    <?php else: ?>
+                                        <div class="no-preview"><i class="fas fa-image"></i><br>No Preview</div>
+                                    <?php endif; ?>
+                                </div>
+                                <input type="file" name="aadhar_front" class="form-control" onchange="previewFile(this, 'preview_aadhar_front')" <?php echo !isset($kycData['aadhar_front']) ? 'required' : ''; ?> accept="image/*">
                             </div>
                         </div>
+
+                        <!-- Aadhaar Back -->
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">Aadhaar Back</label>
-                                <input type="file" name="aadhar_back" class="form-control" <?php echo !isset($kycData['aadhar_back']) ? 'required' : ''; ?>>
+                                <div class="file-preview-container" id="preview_aadhar_back">
+                                    <?php if (isset($kycData['aadhar_back'])): ?>
+                                        <img src="../<?php echo $kycData['aadhar_back']; ?>" alt="Aadhaar Back">
+                                    <?php else: ?>
+                                        <div class="no-preview"><i class="fas fa-image"></i><br>No Preview</div>
+                                    <?php endif; ?>
+                                </div>
+                                <input type="file" name="aadhar_back" class="form-control" onchange="previewFile(this, 'preview_aadhar_back')" <?php echo !isset($kycData['aadhar_back']) ? 'required' : ''; ?> accept="image/*">
                             </div>
                         </div>
+
+                        <!-- PAN Card -->
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">PAN Card</label>
-                                <input type="file" name="pan_card" class="form-control" <?php echo !isset($kycData['pan_card']) ? 'required' : ''; ?>>
+                                <div class="file-preview-container" id="preview_pan_card">
+                                    <?php if (isset($kycData['pan_card'])): ?>
+                                        <img src="../<?php echo $kycData['pan_card']; ?>" alt="PAN Card">
+                                    <?php else: ?>
+                                        <div class="no-preview"><i class="fas fa-image"></i><br>No Preview</div>
+                                    <?php endif; ?>
+                                </div>
+                                <input type="file" name="pan_card" class="form-control" onchange="previewFile(this, 'preview_pan_card')" <?php echo !isset($kycData['pan_card']) ? 'required' : ''; ?> accept="image/*">
                             </div>
                         </div>
+
+                        <!-- Passbook -->
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">Cancel Cheque / Passbook</label>
-                                <input type="file" name="passbook_check" class="form-control" <?php echo !isset($kycData['passbook_check']) ? 'required' : ''; ?>>
+                                <div class="file-preview-container" id="preview_passbook_check">
+                                    <?php if (isset($kycData['passbook_check'])): ?>
+                                        <img src="../<?php echo $kycData['passbook_check']; ?>" alt="Passbook">
+                                    <?php else: ?>
+                                        <div class="no-preview"><i class="fas fa-image"></i><br>No Preview</div>
+                                    <?php endif; ?>
+                                </div>
+                                <input type="file" name="passbook_check" class="form-control" onchange="previewFile(this, 'preview_passbook_check')" <?php echo !isset($kycData['passbook_check']) ? 'required' : ''; ?> accept="image/*">
                             </div>
                         </div>
                     </div>
 
+                    <style>
+                        .file-preview-container {
+                            width: 100%;
+                            height: 150px;
+                            border: 2px dashed var(--border);
+                            border-radius: var(--radius);
+                            margin-bottom: 10px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            overflow: hidden;
+                            background: var(--bg-elevated);
+                        }
+                        .file-preview-container img {
+                            max-width: 100%;
+                            max-height: 100%;
+                            object-fit: contain;
+                        }
+                        .no-preview {
+                            text-align: center;
+                            color: var(--text-muted);
+                            font-size: 12px;
+                        }
+                        .no-preview i {
+                            font-size: 24px;
+                            margin-bottom: 5px;
+                        }
+                    </style>
+
+                    <script>
+                        function previewFile(input, previewId) {
+                            const container = document.getElementById(previewId);
+                            const file = input.files[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onload = function(e) {
+                                    container.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                                }
+                                reader.readAsDataURL(file);
+                            }
+                        }
+                    </script>
+
                     <div style="margin-top: 20px;">
-                        <button type="submit" name="submit_kyc" class="btn btn-primary">
+                        <button type="submit" name="submit_kyc" class="btn btn-primary btn-block">
                             <i class="fas fa-upload"></i> Submit for Verification
                         </button>
                     </div>
