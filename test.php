@@ -1,9 +1,10 @@
 <?php
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-
+date_default_timezone_set('Asia/Kolkata');
 function callAPI($method, $endpoint, $data = [], $customHeaders = [])
 {
     $baseUrl = "https://api.slpe.in/api/v2/";
@@ -67,7 +68,35 @@ function callAPI($method, $endpoint, $data = [], $customHeaders = [])
     ];
 }
 
+$payoutData = [
+    "amount" => 90,
+    "mode" => "IMPS", // IMPS / NEFT
+    "call_back_url" => "https://prifypay.morg.in/payout.php",
+    "gateway_id" => "10",
+    "reference_id" => "PAYOUT_" . time(),
+    "bank_account" => [
+        "name" => "Kumar Saurabh",
+        "ifsc" => "UTIB0001218",
+        "bank_name" => "AXIS BANK",
+        "account_number" => "916010039686821"
+    ]
+];
 
-$res = callAPI("GET", "balance-check");
+// bank_account" => [
+//     "name" => "Kumar Saurabh",
+//     "ifsc" => "UTIB0001218",
+//     "bank_name" => "AXIS BANK",
+//     "account_number" => "916010039686821"
+// ]
 
-print_r($res);
+// "name" => "AATIF KHAN",
+// "ifsc" => "IDFB0043832",
+// "bank_name" => "IDFC FIRST BANK",
+// "account_number" => "10144105187"
+
+$response = callAPI('POST', 'create-payout', $payoutData);
+
+echo "<pre>";
+print_r($response);
+
+file_put_contents("callback_log.txt", "Payout :" . date("Y-m-d H:i:s") . "\n" . json_encode($response) . "\n\n", FILE_APPEND);
