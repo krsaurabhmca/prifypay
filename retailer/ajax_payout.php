@@ -45,6 +45,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
+    // New Check: Verify Gateway Balance before attempting payout
+    $apiBalance = getApiBalance();
+    if (is_array($apiBalance)) {
+        $mode = getSetting($conn, 'api_mode', API_MODE);
+        $currentLimit = ($mode == 'live') ? ($apiBalance['payout_balance'] ?? $apiBalance['wallet_balance'] ?? 0) : ($apiBalance['test_wallet_balance'] ?? 0);
+    } else {
+        $currentLimit = $apiBalance;
+    }
+
+    if ($currentLimit < $amount) {
+        echo json_encode(['success' => false, 'message' => 'Payout Failed: Gateway balance insufficient. Current Limit: ' . formatCurrency($currentLimit)]);
+        exit();
+    }
+
     $beneQuery = mysqli_query($conn, "SELECT * FROM beneficiaries WHERE id = $bene_id AND user_id = $uId AND status = 'verified'");
     $bene = mysqli_fetch_assoc($beneQuery);
 

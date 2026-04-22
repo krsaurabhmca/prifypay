@@ -88,24 +88,38 @@ if (!empty($orderId) && in_array($status, $successStatuses)) {
                     $totalDeduction = $payoutAmount + $retailerFee;
                     
                     if ($uData['wallet_balance'] >= $totalDeduction) {
-                        $payoutRef = "AUTO_" . time() . "_" . $uId;
-                        $pRes = createPayout($payoutAmount, $bene['account_number'], $bene['ifsc'], $bene['bank_name'], $bene['name'], PAYOUT_CALLBACK_URL, $payoutRef);
-                        
-                        if ($pRes['success']) {
-                            updateWallet($conn, $uId, $totalDeduction, 'sub');
-                            if ($uData['parent_id']) {
-                                updateEarningsWallet($conn, $uData['parent_id'], $distributorPart, 'add');
-                                logTransaction($conn, $uData['parent_id'], 'commission', $distributorPart, 0, 0, 0, 0, 'success', 'COMM_'.$payoutRef);
-                            }
-                            
-                            $apiStatus = strtolower($pRes['data']['status'] ?? '');
-                            $payoutUtr = $pRes['data']['utr'] ?? $pRes['data']['transaction_id'] ?? '';
-                            $pStatus = ($apiStatus == 'processed' || $apiStatus == 'success') ? 'success' : 'pending';
-                            
-                            logTransaction($conn, $uId, 'payout', $payoutAmount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, $pStatus, $payoutRef, $payoutUtr, '', $pRes['raw']);
+                        // PRE-CHECK Gateway Balance
+                        $apiBalance = getApiBalance();
+                        if (is_array($apiBalance)) {
+                            $mode = getSetting($conn, 'api_mode', API_MODE);
+                            $currentLimit = ($mode == 'live') ? ($apiBalance['payout_balance'] ?? $apiBalance['wallet_balance'] ?? 0) : ($apiBalance['test_wallet_balance'] ?? 0);
                         } else {
-                            $errMsg = $pRes['data']['message'] ?? $pRes['error'] ?? 'Auto-Payout Failed';
-                            logTransaction($conn, $uId, 'payout', $payoutAmount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, 'failed', $payoutRef, '', $errMsg, $pRes['raw']);
+                            $currentLimit = $apiBalance;
+                        }
+
+                        if ($currentLimit < $payoutAmount) {
+                            $payoutRef = "AUTO_FAIL_" . time() . "_" . $uId;
+                            logTransaction($conn, $uId, 'payout', $payoutAmount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, 'failed', $payoutRef, '', 'Gateway balance insufficient: ' . $currentLimit);
+                        } else {
+                            $payoutRef = "AUTO_" . time() . "_" . $uId;
+                            $pRes = createPayout($payoutAmount, $bene['account_number'], $bene['ifsc'], $bene['bank_name'], $bene['name'], PAYOUT_CALLBACK_URL, $payoutRef);
+                            
+                            if ($pRes['success']) {
+                                updateWallet($conn, $uId, $totalDeduction, 'sub');
+                                if ($uData['parent_id']) {
+                                    updateEarningsWallet($conn, $uData['parent_id'], $distributorPart, 'add');
+                                    logTransaction($conn, $uData['parent_id'], 'commission', $distributorPart, 0, 0, 0, 0, 'success', 'COMM_'.$payoutRef);
+                                }
+                                
+                                $apiStatus = strtolower($pRes['data']['status'] ?? '');
+                                $payoutUtr = $pRes['data']['utr'] ?? $pRes['data']['transaction_id'] ?? '';
+                                $pStatus = ($apiStatus == 'processed' || $apiStatus == 'success') ? 'success' : 'pending';
+                                
+                                logTransaction($conn, $uId, 'payout', $payoutAmount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, $pStatus, $payoutRef, $payoutUtr, '', $pRes['raw']);
+                            } else {
+                                $errMsg = $pRes['data']['message'] ?? $pRes['error'] ?? 'Auto-Payout Failed';
+                                logTransaction($conn, $uId, 'payout', $payoutAmount, $retailerFee, $distributorPart, ($retailerFee - $distributorPart), $retailerFee, 'failed', $payoutRef, '', $errMsg, $pRes['raw']);
+                            }
                         }
                     }
                 }
